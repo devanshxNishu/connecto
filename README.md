@@ -7,6 +7,10 @@ anyone you can describe or list - and Connecto sends a few personal connection r
 on your own computer**. It works with no AI at all. If you want a more personal touch, a free API key (or a model
 running on your laptop) can write one opening line per person.
 
+**Website:** a one-page getting-started guide (install, sign in, first run, daily schedule) lives in
+[`site/`](site/index.html). GitHub Pages publishes it at `https://YOUR-USERNAME.github.io/connecto/` - see
+[Development](#development) for the one-time setup.
+
 > **Please read this first.** LinkedIn's User Agreement does not allow automated activity. Accounts that automate can be
 > warned, limited or restricted, and no tool can promise otherwise. Connecto keeps the volume low (the ceilings are
 > in the code, not just in settings), goes slowly, shows its browser window, and stops at the first sign of trouble -
@@ -245,6 +249,11 @@ python -m pytest -m browser          # the real browser against a mock LinkedIn
 The test suite never touches the real internet or a real LinkedIn: a guard in `tests/conftest.py` makes any test that
 tries fail loudly. Contributions are welcome - see [CONTRIBUTING.md](CONTRIBUTING.md) and
 [docs/architecture.md](docs/architecture.md). Security issues: [SECURITY.md](SECURITY.md).
+
+**The website.** `site/index.html` is the getting-started page. To publish it, open the repository on GitHub, go to
+*Settings -> Pages -> Build and deployment* and choose **GitHub Actions** as the source (once). Every push to `main`
+that changes `site/` then publishes it through `.github/workflows/pages.yml`. The page finds its own repository
+address, so its GitHub links and the `git clone` command need no editing.
 
 ## FAQ
 

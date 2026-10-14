@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connecto: grow your LinkedIn network, a few careful requests a day</title>
+<meta name="description" content="Connecto is a free, open-source assistant that finds the people you want to meet, writes a personal note for each and sends a few LinkedIn connection requests a day from your own computer.">
+<style>
+  :root {
+    --bg: #fafaf8; --fg: #1c1d1f; --muted: #5d6166; --line: #e2e2dd; --card: #ffffff;
+    --accent: #2c6b5a; --accent-soft: #e6f0ec; --accent-ink: #ffffff;
+    --code-bg: #f1f1ed; --code-fg: #1c1d1f; --warn-bg: #fff5e3; --warn-line: #e2b867;
+    --radius: 10px; --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #131414; --fg: #e9e9e6; --muted: #a2a5a8; --line: #2b2d2e; --card: #1a1b1c;
+      --accent: #6cc3a5; --accent-soft: #1d2e28; --accent-ink: #0c1a15;
+      --code-bg: #1f2122; --code-fg: #e9e9e6; --warn-bg: #2a2416; --warn-line: #8a6a2c;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg); line-height: 1.6;
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  a { color: var(--accent); }
+  .wrap { max-width: 820px; margin: 0 auto; padding: 0 20px; }
+  header.top { border-bottom: 1px solid var(--line); background: var(--bg); position: sticky; top: 0; z-index: 2; }
+  header.top .wrap { display: flex; align-items: center; justify-content: space-between; height: 56px; gap: 16px; }
+  .brand { font-weight: 700; font-size: 18px; color: var(--fg); text-decoration: none; letter-spacing: -0.01em; }
+  .brand span { color: var(--accent); }
+  nav { display: flex; gap: 18px; flex-wrap: wrap; font-size: 14px; }
+  nav a { color: var(--muted); text-decoration: none; }
+  nav a:hover { color: var(--fg); }
+  .hero { padding: 56px 0 28px; }
+  h1 { font-size: clamp(30px, 5vw, 44px); line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 16px; }
+  h2 { font-size: 26px; letter-spacing: -0.01em; margin: 56px 0 12px; }
+  h3 { font-size: 18px; margin: 0 0 6px; }
+  .lead { font-size: 19px; color: var(--muted); margin: 0 0 24px; max-width: 680px; }
+  .cta { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn { display: inline-block; padding: 10px 18px; border-radius: 8px; border: 1px solid var(--line); background: var(--card);
+         color: var(--fg); text-decoration: none; font-weight: 600; font-size: 15px; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .caution { margin: 28px 0 0; padding: 16px 18px; border: 1px solid var(--warn-line); background: var(--warn-bg);
+             border-radius: var(--radius); font-size: 15px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; }
+  .card h3 { font-size: 16px; }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; }
+  @media (max-width: 680px) { .grid3 { grid-template-columns: 1fr; } nav { gap: 12px; } }
+  .needs { color: var(--muted); }
+  ol.steps { list-style: none; counter-reset: step; padding: 0; margin: 24px 0 0; }
+  ol.steps > li { counter-increment: step; position: relative; padding: 0 0 30px 52px; border-left: 2px solid var(--line);
+                  margin-left: 17px; }
+  ol.steps > li:last-child { border-left-color: transparent; padding-bottom: 0; }
+  ol.steps > li::before { content: counter(step); position: absolute; left: -18px; top: -2px; width: 34px; height: 34px;
+                          border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-weight: 700;
+                          display: flex; align-items: center; justify-content: center; font-size: 15px; }
+  ol.steps p { margin: 4px 0 10px; }
+  .code { position: relative; margin: 10px 0; }
+  pre { margin: 0; padding: 14px 16px; padding-right: 72px; background: var(--code-bg); color: var(--code-fg); border-radius: 8px;
+        overflow-x: auto; font: 14px/1.55 var(--mono); border: 1px solid var(--line); }
+  pre .c { color: var(--muted); }
+  code { font-family: var(--mono); font-size: 0.92em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
+  pre code { background: none; padding: 0; font-size: inherit; }
+  .copy { position: absolute; top: 8px; right: 8px; font: 600 12px/1 inherit; padding: 6px 9px; border-radius: 6px;
+          border: 1px solid var(--line); background: var(--card); color: var(--muted); cursor: pointer; }
+  .copy:hover { color: var(--fg); }
+  .tabs { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin: 6px 0 0; }
+  .tabs button { font: 600 13px/1 inherit; padding: 8px 14px; border: 0; background: var(--card); color: var(--muted); cursor: pointer; }
+  .tabs button[aria-selected="true"] { background: var(--accent-soft); color: var(--fg); }
+  .note { font-size: 14px; color: var(--muted); }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { color: var(--muted); font-weight: 600; font-size: 13px; }
+  td code { white-space: nowrap; }
+  @media (max-width: 680px) {
+    td code { white-space: normal; overflow-wrap: anywhere; }
+    ol.steps > li { padding-left: 40px; margin-left: 14px; }
+    header.top .wrap { height: auto; min-height: 56px; flex-wrap: wrap; padding-top: 10px; padding-bottom: 10px; row-gap: 6px; }
+    nav { gap: 14px; }
+  }
+  .limits { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 16px 0; }
+  .limit { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; }
+  .limit b { display: block; font-size: 28px; letter-spacing: -0.02em; }
+  .limit span { color: var(--muted); font-size: 14px; }
+  @media (max-width: 680px) { .limits { grid-template-columns: 1fr; } }
+  details { border-bottom: 1px solid var(--line); padding: 12px 0; }
+  summary { cursor: pointer; font-weight: 600; }
+  details p { margin: 8px 0 0; color: var(--muted); }
+  footer { margin: 64px 0 0; padding: 24px 0 40px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#">Connect<span>o</span></a>
+    <nav aria-label="Sections">
+      <a href="#start">Get started</a>
+      <a href="#daily">Every day</a>
+      <a href="#safety">Safety</a>
+      <a href="#faq">FAQ</a>
+      <a data-repo href="https://github.com/">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="hero">
+    <h1>Grow your LinkedIn network, a few careful requests a day</h1>
+    <p class="lead">Connecto finds the people you want to meet, writes a personal note for each of them and sends a small
+      number of connection requests every day. It runs on your own computer, in your own browser. Free and open source.</p>
+    <div class="cta">
+      <a class="btn primary" href="#start">Get started</a>
+      <a class="btn" data-repo href="https://github.com/">View on GitHub</a>
+    </div>
+    <div class="caution" role="note">
+      <strong>Read this first.</strong> LinkedIn does not permit automated activity, and it can restrict accounts that use
+      automation tools. Connecto keeps the numbers low and stops at the first sign of trouble, which lowers that risk. It does
+      not remove it. Use Connecto only if you accept the risk for your own account.
+    </div>
+  </section>
+
+  <section aria-labelledby="how">
+    <h2 id="how">How it works</h2>
+    <div class="grid3">
+      <div class="card"><h3>1. Find</h3><p>From the YC startup directory, a CSV file, any web page with profiles, a LinkedIn
+        search, or a list you type.</p></div>
+      <div class="card"><h3>2. Write</h3><p>A personal note from your own templates. Optionally, AI adds one checked opening
+        line.</p></div>
+      <div class="card"><h3>3. Send</h3><p>A few requests a day, inside hard limits, from your own browser. You read every
+        note first.</p></div>
+    </div>
+  </section>
+
+  <section aria-labelledby="start">
+    <h2 id="start">Get started</h2>
+    <p class="needs">You need <strong>Python 3.10 or newer</strong>, <strong>Google Chrome</strong> (or Microsoft Edge) and a
+      LinkedIn account. It takes about 10 minutes. Connecto is developed and tested on Linux; macOS and Windows work but have
+      had less real-world use, so please report anything odd.</p>
+
+    <ol class="steps">
+      <li>
+        <h3>Install Connecto</h3>
+        <p>Open a terminal (on a Mac: the Terminal app) and run these lines one at a time.</p>
+        <div class="tabs" role="tablist" aria-label="Operating system">
+          <button role="tab" id="tab-unix" aria-controls="os-unix" aria-selected="true">macOS and Linux</button>
+          <button role="tab" id="tab-win" aria-controls="os-win" aria-selected="false">Windows</button>
+        </div>
+        <div class="code" id="os-unix" role="tabpanel" aria-labelledby="tab-unix">
+<pre><code>git clone https://github.com/<span class="gh-user">YOUR-USERNAME</span>/connecto.git
+cd connecto
+python3 -m venv .venv
+source .venv/bin/activate
+pip install .
+connecto doctor</code></pre>
+        </div>
+        <div class="code" id="os-win" role="tabpanel" aria-labelledby="tab-win" hidden>
+<pre><code>git clone https://github.com/<span class="gh-user">YOUR-USERNAME</span>/connecto.git
+cd connecto
+py -m venv .venv
+.venv\Scripts\Activate.ps1
+pip install .
+connecto doctor</code></pre>
+        </div>
+        <p class="note"><code>connecto doctor</code> tells you if anything is missing and changes nothing. No Chrome or Edge? Run
+          <code>python -m playwright install chromium</code> once. In every new terminal window, go to the folder and activate
+          <code>.venv</code> again before you use <code>connecto</code>.</p>
+      </li>
+
+      <li>
+        <h3>Open the setup page</h3>
+        <div class="code"><pre><code>connecto ui</code></pre></div>
+        <p>A private page opens in your browser. It runs only on your computer (127.0.0.1). Read the risk note and accept it,
+          tell Connecto your first name and what you work on, choose who you want to meet, and write your notes. Prefer the
+          terminal? <code>connecto init</code> asks the same questions.</p>
+      </li>
+
+      <li>
+        <h3>Sign in to LinkedIn</h3>
+        <p>On the setup page, press <strong>Sign in to LinkedIn</strong>. Or run:</p>
+        <div class="code"><pre><code>connecto login</code></pre></div>
+        <p>A browser window opens at LinkedIn. Sign in yourself, the way you always do. Connecto never asks for, sees or stores
+          your password. It keeps the signed-in session in its own browser profile on your computer, and
+          <code>connecto logout</code> deletes it.</p>
+      </li>
+
+      <li>
+        <h3>Collect people and read the notes</h3>
+        <div class="code"><pre><code>connecto fetch      <span class="c"># collect people from your sources</span>
+connecto preview    <span class="c"># who is next, and the note each person would get</span></code></pre></div>
+        <p>Nothing is sent in this step.</p>
+      </li>
+
+      <li>
+        <h3>Send the first few, and watch</h3>
+        <div class="code"><pre><code>connecto run --dry-run    <span class="c"># visits profiles, shows what would happen, sends nothing</span>
+connecto run --limit 3    <span class="c"># sends at most 3, after you confirm</span></code></pre></div>
+        <p>Watch the browser window. If LinkedIn shows a warning or a check, Connecto stops, and so should you for a few days.</p>
+      </li>
+
+      <li>
+        <h3>Let it run every day</h3>
+        <div class="code"><pre><code>connecto schedule install
+connecto schedule status</code></pre></div>
+        <p>It runs at 10:40 and 18:20 by default (change this in the settings or with <code>--times</code>), only inside your
+          active hours, and collects new people before each run. Keep your computer on and signed in to your user account.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section aria-labelledby="daily">
+    <h2 id="daily">Every day</h2>
+    <table>
+      <thead><tr><th scope="col">Command</th><th scope="col">What it does</th></tr></thead>
+      <tbody>
+        <tr><td><code>connecto report</code></td><td>What has been sent, and what is coming.</td></tr>
+        <tr><td><code>connecto preview</code></td><td>The next people and their notes. Sends nothing.</td></tr>
+        <tr><td><code>connecto pause --days 3</code></td><td>Stop sending for a while.</td></tr>
+        <tr><td><code>connecto resume</code></td><td>Lift the pause.</td></tr>
+        <tr><td><code>connecto add LINK</code></td><td>Add someone by hand, from a profile link, a text file or a CSV.</td></tr>
+        <tr><td><code>connecto skip LINK</code></td><td>Never contact this profile.</td></tr>
+        <tr><td><code>connecto export --out history.csv</code></td><td>Your invitation history as a spreadsheet.</td></tr>
+        <tr><td><code>connecto schedule uninstall</code></td><td>Stop the daily runs.</td></tr>
+        <tr><td><code>connecto doctor</code></td><td>Check that everything is in place.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section aria-labelledby="ai">
+    <h2 id="ai">Optional: a personal first line from AI</h2>
+    <p>Connecto works without AI. With a free key from Gemini, Groq or OpenRouter, or a model on your own computer (Ollama,
+      LM Studio), it can add one short opening line to each note. Only a few public facts are sent: title, company, headline,
+      description, industry and tags. Never a name, a link, a location, an e-mail address or a phone number. Every line is
+      checked before it is used, and a line that fails the check is simply left out.</p>
+    <div class="code"><pre><code>connecto ai providers   <span class="c"># the free and local options</span>
+connecto ai key         <span class="c"># save your key in a private file</span>
+connecto ai test        <span class="c"># check that it works</span></code></pre></div>
+  </section>
+
+  <section aria-labelledby="safety">
+    <h2 id="safety">Limits that never change</h2>
+    <p>These are ceilings in the code. No setting raises them.</p>
+    <div class="limits">
+      <div class="limit"><b>30</b><span>requests a day at most</span></div>
+      <div class="limit"><b>100</b><span>requests a week at most</span></div>
+      <div class="limit"><b>20</b><span>requests in one run at most</span></div>
+    </div>
+    <p>Connecto stops at the first sign of trouble: a LinkedIn check page, a warning page or repeated errors. It uses no
+      tricks against LinkedIn's checks: no fingerprint changes, no CAPTCHA tools. Your settings, history and browser session
+      stay on your computer, in <code>~/.connecto</code>. There is no server, no user account and no telemetry.
+      <a data-doc="docs/safety.md" href="../docs/safety.md">More about safety</a>.</p>
+  </section>
+
+  <section aria-labelledby="faq">
+    <h2 id="faq">Questions</h2>
+    <details><summary>Is it free?</summary><p>Yes. Connecto is open source under the MIT License. The AI helper is optional,
+      and it works with free providers or a model on your own computer.</p></details>
+    <details><summary>Does it work with a free LinkedIn account?</summary><p>Yes. Set <code>message.plan</code> to
+      <code>free</code> for 200-character notes or <code>premium</code> for 300. If LinkedIn offers no note box, Connecto
+      sends the request without a note, or stops if you set <code>if_note_unavailable: stop</code>.</p></details>
+    <details><summary>Can LinkedIn restrict my account?</summary><p>Yes. LinkedIn does not permit automation, and nobody can
+      promise that an account stays unrestricted. Keep the numbers low, watch the first runs, and stop for a few days if
+      LinkedIn shows a warning.</p></details>
+    <details><summary>Does it send messages?</summary><p>No. Only connection requests, with an optional short note.</p></details>
+    <details><summary>Something does not work</summary><p>Run <code>connecto doctor</code> first. Then read
+      <a data-doc="docs/troubleshooting.md" href="../docs/troubleshooting.md">troubleshooting</a>, or open an issue on
+      <a data-repo href="https://github.com/">GitHub</a>.</p></details>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    Connecto is free software under the MIT License. It is not affiliated with, endorsed by or connected to LinkedIn.
+    <br><a data-repo href="https://github.com/">GitHub</a> ·
+    <a data-doc="docs/safety.md" href="../docs/safety.md">Safety</a> ·
+    <a data-doc="docs/troubleshooting.md" href="../docs/troubleshooting.md">Troubleshooting</a> ·
+    <a data-doc="docs/sources.md" href="../docs/sources.md">Choosing who to meet</a>
+  </div>
+</footer>
+<p class="sr" aria-live="polite" id="live"></p>
+
+<script>
+(function () {
+  // On GitHub Pages (OWNER.github.io/REPO/), point every GitHub link and the clone command at this repository.
+  var host = location.hostname.match(/^([a-z0-9-]+)\.github\.io$/i);
+  var repoName = location.pathname.split("/")[1] || "connecto";
+  var owner = host ? host[1] : null;
+  var repo = owner ? "https://github.com/" + owner + "/" + repoName : null;
+  if (repo) {
+    document.querySelectorAll("[data-repo]").forEach(function (a) { a.href = repo; });
+    document.querySelectorAll("[data-doc]").forEach(function (a) { a.href = repo + "/blob/main/" + a.getAttribute("data-doc"); });
+    document.querySelectorAll(".gh-user").forEach(function (s) { s.textContent = owner; });
+  }
+
+  // Operating system tabs: Windows visitors see the Windows commands first.
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('[role="tab"]'));
+  function show(tab) {
+    tabs.forEach(function (t) {
+      var on = t === tab;
+      t.setAttribute("aria-selected", on ? "true" : "false");
+      document.getElementById(t.getAttribute("aria-controls")).hidden = !on;
+    });
+  }
+  tabs.forEach(function (t) { t.addEventListener("click", function () { show(t); }); });
+  if (/Win/i.test(navigator.platform || navigator.userAgent)) { show(document.getElementById("tab-win")); }
+
+  // A copy button on every code block.
+  var live = document.getElementById("live");
+  document.querySelectorAll(".code").forEach(function (box) {
+    var button = document.createElement("button");
+    button.className = "copy";
+    button.type = "button";
+    button.textContent = "Copy";
+    button.addEventListener("click", function () {
+      var lines = box.querySelector("code").textContent.split("\n").map(function (line) {
+        return line.replace(/\s+#.*$/, "");          // copy the commands without the comments
+      });
+      var text = lines.join("\n").trim();
+      function done(ok) {
+        button.textContent = ok ? "Copied" : "Select and copy";
+        live.textContent = ok ? "Copied to the clipboard" : "";
+        setTimeout(function () { button.textContent = "Copy"; }, 1600);
+      }
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
+      } else { done(false); }
+    });
+    box.appendChild(button);
+  });
+})();
+</script>
+</body>
+</html>
