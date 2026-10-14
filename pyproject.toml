@@ -37,6 +37,11 @@ dev = ["pytest>=8.0"]
 [project.scripts]
 connecto = "connecto.cli:main"
 
+[project.urls]
+Homepage = "https://devanshxnishu.github.io/connecto/"
+Repository = "https://github.com/devanshxNishu/connecto"
+Issues = "https://github.com/devanshxNishu/connecto/issues"
+
 [tool.setuptools]
 include-package-data = true
 

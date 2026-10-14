@@ -8,7 +8,7 @@ on your own computer**. It works with no AI at all. If you want a more personal 
 running on your laptop) can write one opening line per person.
 
 **Website:** a one-page getting-started guide (install, sign in, first run, daily schedule) lives in
-[`site/`](site/index.html). GitHub Pages publishes it at `https://YOUR-USERNAME.github.io/connecto/` - see
+[`site/`](site/index.html). GitHub Pages publishes it at `https://devanshxnishu.github.io/connecto/` - see
 [Development](#development) for the one-time setup.
 
 > **Please read this first.** LinkedIn's User Agreement does not allow automated activity. Accounts that automate can be
@@ -44,7 +44,7 @@ once), and a LinkedIn account. Connecto is developed and tested on Linux; the ma
 by unit tests but have had less real-world use, so [please report](CONTRIBUTING.md) anything odd.
 
 ```bash
-git clone https://github.com/YOUR-USERNAME/connecto.git
+git clone https://github.com/devanshxNishu/connecto.git
 cd connecto
 python -m venv .venv
 source .venv/bin/activate            # Windows: .venv\Scripts\activate

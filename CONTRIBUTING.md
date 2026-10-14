@@ -34,7 +34,7 @@ documentation, scheduler fixes for your operating system, and above all **fixes 
 ## Setting up
 
 ```bash
-git clone https://github.com/YOUR-USERNAME/connecto.git
+git clone https://github.com/devanshxNishu/connecto.git
 cd connecto
 python -m venv .venv && source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"

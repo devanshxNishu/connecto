@@ -103,7 +103,7 @@
       <a href="#daily">Every day</a>
       <a href="#safety">Safety</a>
       <a href="#faq">FAQ</a>
-      <a data-repo href="https://github.com/">GitHub</a>
+      <a data-repo href="https://github.com/devanshxNishu/connecto">GitHub</a>
     </nav>
   </div>
 </header>
@@ -115,7 +115,7 @@
       number of connection requests every day. It runs on your own computer, in your own browser. Free and open source.</p>
     <div class="cta">
       <a class="btn primary" href="#start">Get started</a>
-      <a class="btn" data-repo href="https://github.com/">View on GitHub</a>
+      <a class="btn" data-repo href="https://github.com/devanshxNishu/connecto">View on GitHub</a>
     </div>
     <div class="caution" role="note">
       <strong>Read this first.</strong> LinkedIn does not permit automated activity, and it can restrict accounts that use
@@ -151,7 +151,7 @@
           <button role="tab" id="tab-win" aria-controls="os-win" aria-selected="false">Windows</button>
         </div>
         <div class="code" id="os-unix" role="tabpanel" aria-labelledby="tab-unix">
-<pre><code>git clone https://github.com/<span class="gh-user">YOUR-USERNAME</span>/connecto.git
+<pre><code>git clone https://github.com/<span class="gh-user">devanshxNishu</span>/connecto.git
 cd connecto
 python3 -m venv .venv
 source .venv/bin/activate
@@ -159,7 +159,7 @@ pip install .
 connecto doctor</code></pre>
         </div>
         <div class="code" id="os-win" role="tabpanel" aria-labelledby="tab-win" hidden>
-<pre><code>git clone https://github.com/<span class="gh-user">YOUR-USERNAME</span>/connecto.git
+<pre><code>git clone https://github.com/<span class="gh-user">devanshxNishu</span>/connecto.git
 cd connecto
 py -m venv .venv
 .venv\Scripts\Activate.ps1
@@ -252,7 +252,7 @@ connecto ai test        <span class="c"># check that it works</span></code></pre
     <p>Connecto stops at the first sign of trouble: a LinkedIn check page, a warning page or repeated errors. It uses no
       tricks against LinkedIn's checks: no fingerprint changes, no CAPTCHA tools. Your settings, history and browser session
       stay on your computer, in <code>~/.connecto</code>. There is no server, no user account and no telemetry.
-      <a data-doc="docs/safety.md" href="../docs/safety.md">More about safety</a>.</p>
+      <a data-doc="docs/safety.md" href="https://github.com/devanshxNishu/connecto/blob/main/docs/safety.md">More about safety</a>.</p>
   </section>
 
   <section aria-labelledby="faq">
@@ -267,25 +267,26 @@ connecto ai test        <span class="c"># check that it works</span></code></pre
       LinkedIn shows a warning.</p></details>
     <details><summary>Does it send messages?</summary><p>No. Only connection requests, with an optional short note.</p></details>
     <details><summary>Something does not work</summary><p>Run <code>connecto doctor</code> first. Then read
-      <a data-doc="docs/troubleshooting.md" href="../docs/troubleshooting.md">troubleshooting</a>, or open an issue on
-      <a data-repo href="https://github.com/">GitHub</a>.</p></details>
+      <a data-doc="docs/troubleshooting.md" href="https://github.com/devanshxNishu/connecto/blob/main/docs/troubleshooting.md">troubleshooting</a>, or open an issue on
+      <a data-repo href="https://github.com/devanshxNishu/connecto">GitHub</a>.</p></details>
   </section>
 </main>
 
 <footer>
   <div class="wrap">
     Connecto is free software under the MIT License. It is not affiliated with, endorsed by or connected to LinkedIn.
-    <br><a data-repo href="https://github.com/">GitHub</a> ·
-    <a data-doc="docs/safety.md" href="../docs/safety.md">Safety</a> ·
-    <a data-doc="docs/troubleshooting.md" href="../docs/troubleshooting.md">Troubleshooting</a> ·
-    <a data-doc="docs/sources.md" href="../docs/sources.md">Choosing who to meet</a>
+    <br><a data-repo href="https://github.com/devanshxNishu/connecto">GitHub</a> ·
+    <a data-doc="docs/safety.md" href="https://github.com/devanshxNishu/connecto/blob/main/docs/safety.md">Safety</a> ·
+    <a data-doc="docs/troubleshooting.md" href="https://github.com/devanshxNishu/connecto/blob/main/docs/troubleshooting.md">Troubleshooting</a> ·
+    <a data-doc="docs/sources.md" href="https://github.com/devanshxNishu/connecto/blob/main/docs/sources.md">Choosing who to meet</a>
   </div>
 </footer>
 <p class="sr" aria-live="polite" id="live"></p>
 
 <script>
 (function () {
-  // On GitHub Pages (OWNER.github.io/REPO/), point every GitHub link and the clone command at this repository.
+  // On GitHub Pages (OWNER.github.io/REPO/), point every GitHub link and the clone command at this repository, so a fork's
+  // page links to the fork. Anywhere else the links above (devanshxNishu/connecto) stay as written.
   var host = location.hostname.match(/^([a-z0-9-]+)\.github\.io$/i);
   var repoName = location.pathname.split("/")[1] || "connecto";
   var owner = host ? host[1] : null;
