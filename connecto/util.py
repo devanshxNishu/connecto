@@ -432,12 +432,25 @@ def csv_safe(value) -> str:
     return "'" + text if text.startswith(("=", "+", "-", "@", "\t", "\r")) else text
 
 
+_NAME_WORD = re.compile(r"[^\W\d_]+(?:['\u2019.\-][^\W\d_]+)*")
+
+
+def name_case(name: str) -> str:
+    """A name written in one case only, as it reads in a greeting: 'VISHNU' -> 'Vishnu', 'naman' -> 'Naman', 'JEAN-LUC' ->
+    'Jean-Luc'. Mixed case ('DeShawn', 'McKay'), initials ('JJ'), scripts without capitals and anything that is not
+    shaped like a name (digits, braces, underscores) stay exactly as written."""
+    text = name or ""
+    if not _NAME_WORD.fullmatch(text) or sum(c.isalpha() for c in text) <= 2 or not (text.isupper() or text.islower()):
+        return text
+    return re.sub(r"[^\W\d_]+", lambda m: m.group()[0].upper() + m.group()[1:].lower(), text)
+
+
 def split_first_name(full_name: str) -> str:
     name = clean_text(full_name)
     if not name:
         return ""
     name = re.sub(r"^(dr|mr|mrs|ms|prof)\.?\s+", "", name, flags=re.I)
-    return name.split(" ")[0].strip(",.()")
+    return name_case(name.split(" ")[0].strip(",.()"))
 
 
 def norm_key(name: str) -> str:

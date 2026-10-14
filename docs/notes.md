@@ -33,7 +33,7 @@ message:
 
 | Syntax | Meaning |
 |---|---|
-| `{first_name}` | A value from the person. Also `{full_name}`, `{last_name}`, `{company}`, `{title}`, `{headline}`, `{location}`, and anything else the source stored (a CSV column, a YC `{batch}`, `{industry}`, `{one_liner}` ...). |
+| `{first_name}` | A value from the person; a first name written all in capitals or all in lower case is shown as a name (VISHNU -> Vishnu). Also `{full_name}`, `{last_name}`, `{company}`, `{title}`, `{headline}`, `{location}`, and anything else the source stored (a CSV column, a YC `{batch}`, `{industry}`, `{one_liner}` ...). |
 | `{me_first_name}`, `{me_about}`, `{me_project}`, `{me_project_blurb}` | Values from the `me:` block of your settings. Any extra key you add under `me:` is available as `{me_<key>}`. |
 | `{company\|your company}` | A fallback, used when the value is missing. |
 | `[[ at {company}]]` | An optional part. It is dropped when a value inside it is missing, and dropped first when the note is too long. |

@@ -18,6 +18,7 @@ import re
 from dataclasses import dataclass
 
 from . import privacy
+from .util import name_case
 
 VAR = re.compile(r"\{([A-Za-z_][A-Za-z0-9_]*)(?:\|([^{}]*))?\}")
 RESERVED = {"hook"}                      # filled by the AI helper, never taken from a person's profile data
@@ -38,6 +39,7 @@ def build_context(person: dict, me: dict, extra: dict | None = None) -> dict:
         ctx.setdefault(k, "")
     if not ctx["first_name"] and ctx["full_name"]:
         ctx["first_name"] = ctx["full_name"].split(" ")[0]
+    ctx["first_name"] = name_case(ctx["first_name"])          # "Hi VISHNU," reads as shouting; "Hi Vishnu," does not
     for k, v in (me or {}).items():
         ctx[f"me_{k}"] = str(v or "").strip()
     for k, v in (extra or {}).items():

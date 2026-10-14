@@ -121,6 +121,22 @@ def test_split_first_name_and_clean_text():
     assert as_list("a, b;c|d\n e") == ["a", "b", "c", "d", "e"]
 
 
+@pytest.mark.parametrize("full, first", [
+    ("VISHNU KRISHNAPRASAD", "Vishnu"), ("naman gupta", "Naman"), ("JEAN-LUC PICARD", "Jean-Luc"),
+    ("o'neil smith", "O'Neil"), ("ZO\u00cb M\u00dcLLER", "Zo\u00eb"),                    # one case only: greeted as a name
+    ("DeShawn Jones", "DeShawn"), ("JJ Abrams", "JJ"), ("Sirsho C", "Sirsho"), ("\u7530\u4e2d \u592a\u90ce", "\u7530\u4e2d"),   # left as written
+])
+def test_a_first_name_written_in_one_case_reads_as_a_name(full, first):
+    assert split_first_name(full) == first
+
+
+def test_the_greeting_name_is_not_shouted():
+    ctx = notes.build_context({"first_name": "VISHNU", "full_name": "VISHNU KRISHNAPRASAD"}, {})
+    assert ctx["first_name"] == "Vishnu" and ctx["full_name"] == "VISHNU KRISHNAPRASAD"
+    assert notes.build_context({"full_name": "naman gupta"}, {})["first_name"] == "Naman"
+    assert notes.build_context({"first_name": "McKay"}, {})["first_name"] == "McKay"
+
+
 # ----------------------------------------------------------------------------- limits
 def test_limits_defaults_and_ceilings():
     lim = limits.limits_from_config({})
