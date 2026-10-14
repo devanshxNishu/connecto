@@ -2,296 +2,588 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Connecto: grow your LinkedIn network, a few careful requests a day</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Connecto</title>
 <meta name="description" content="Connecto is a free, open-source assistant that finds the people you want to meet, writes a personal note for each and sends a few LinkedIn connection requests a day from your own computer.">
+<meta name="theme-color" content="#e6eee8" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#08110e" media="(prefers-color-scheme: dark)">
 <style>
-  :root {
-    --bg: #fafaf8; --fg: #1c1d1f; --muted: #5d6166; --line: #e2e2dd; --card: #ffffff;
-    --accent: #2c6b5a; --accent-soft: #e6f0ec; --accent-ink: #ffffff;
-    --code-bg: #f1f1ed; --code-fg: #1c1d1f; --warn-bg: #fff5e3; --warn-line: #e2b867;
-    --radius: 10px; --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+/* Layout: a desktop. A slow, living wallpaper; a glass menu bar; the guide as a stack of glass windows; a dock to move around. */
+:root {
+  /* colour: jade for "connected", apricot for the warm first hello, sea for calm; neutrals lean green */
+  --wall: #e6eee8; --blob-jade: #7fd0b6; --blob-apricot: #ffc58c; --blob-sea: #a6d3e6;
+  --glass: rgba(255, 255, 255, .50); --glass-hi: rgba(255, 255, 255, .72); --glass-line: rgba(255, 255, 255, .78);
+  --edge: rgba(22, 46, 38, .10); --shine: rgba(255, 255, 255, .55);
+  --fg: #13201b; --muted: #485952; --faint: #74857e;
+  --accent: #137a60; --accent-ink: #ffffff; --accent-soft: rgba(19, 122, 96, .12);
+  --warm: #a95a0c; --warm-soft: rgba(255, 176, 92, .20); --sky: #23709e; --sky-soft: rgba(35, 112, 158, .12);
+  --term: rgba(12, 20, 17, .90); --term-fg: #e2efe8; --term-dim: #8aa398; --term-prompt: #6bd6b3;
+  --shadow: 0 1px 0 var(--shine) inset, 0 22px 50px -22px rgba(16, 40, 32, .45);
+  /* type: the OS's own faces; rounded display where the system has one */
+  --display: ui-rounded, "SF Pro Rounded", system-ui, -apple-system, "Segoe UI Variable Display", "Segoe UI", Roboto, sans-serif;
+  --body: system-ui, -apple-system, "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, "Cascadia Mono", Consolas, monospace;
+  --r-win: 22px; --r-sm: 12px;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --wall: #08110e; --blob-jade: #11745b; --blob-apricot: #7d4716; --blob-sea: #154c63;
+    --glass: rgba(18, 30, 26, .52); --glass-hi: rgba(26, 42, 36, .74); --glass-line: rgba(255, 255, 255, .10);
+    --edge: rgba(0, 0, 0, .40); --shine: rgba(255, 255, 255, .07);
+    --fg: #e6f1ec; --muted: #a2b6ad; --faint: #73867e;
+    --accent: #5ed1ad; --accent-ink: #052018; --accent-soft: rgba(94, 209, 173, .14);
+    --warm: #f4b26c; --warm-soft: rgba(244, 178, 108, .14); --sky: #7cc3eb; --sky-soft: rgba(124, 195, 235, .12);
+    --term: rgba(3, 8, 6, .80); --term-fg: #e2efe8; --term-dim: #7b9489; --term-prompt: #6bd6b3;
+    --shadow: 0 1px 0 var(--shine) inset, 0 26px 60px -22px rgba(0, 0, 0, .75);
+    color-scheme: dark;
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #131414; --fg: #e9e9e6; --muted: #a2a5a8; --line: #2b2d2e; --card: #1a1b1c;
-      --accent: #6cc3a5; --accent-soft: #1d2e28; --accent-ink: #0c1a15;
-      --code-bg: #1f2122; --code-fg: #e9e9e6; --warn-bg: #2a2416; --warn-line: #8a6a2c;
-    }
+}
+:root[data-theme="dark"] {
+  --wall: #08110e; --blob-jade: #11745b; --blob-apricot: #7d4716; --blob-sea: #154c63;
+  --glass: rgba(18, 30, 26, .52); --glass-hi: rgba(26, 42, 36, .74); --glass-line: rgba(255, 255, 255, .10);
+  --edge: rgba(0, 0, 0, .40); --shine: rgba(255, 255, 255, .07);
+  --fg: #e6f1ec; --muted: #a2b6ad; --faint: #73867e;
+  --accent: #5ed1ad; --accent-ink: #052018; --accent-soft: rgba(94, 209, 173, .14);
+  --warm: #f4b26c; --warm-soft: rgba(244, 178, 108, .14); --sky: #7cc3eb; --sky-soft: rgba(124, 195, 235, .12);
+  --term: rgba(3, 8, 6, .80); --term-fg: #e2efe8; --term-dim: #7b9489; --term-prompt: #6bd6b3;
+  --shadow: 0 1px 0 var(--shine) inset, 0 26px 60px -22px rgba(0, 0, 0, .75);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+body {
+  margin: 0; min-height: 100%; background: var(--wall); color: var(--fg);
+  font: 16px/1.6 var(--body); -webkit-font-smoothing: antialiased;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 120px;
+}
+a { color: var(--accent); }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 8px; }
+h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; }
+h2 { font-size: clamp(28px, 4vw, 38px); letter-spacing: -.025em; line-height: 1.1; }
+h3 { font-size: 18px; letter-spacing: -.01em; }
+p { margin: 0; }
+code, pre { font-family: var(--mono); }
+.kicker { font: 600 12px/1 var(--body); letter-spacing: .12em; text-transform: uppercase; color: var(--accent); }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* ---------------------------------------------------------------- wallpaper */
+.wallpaper { position: fixed; inset: 0; z-index: -1; overflow: hidden; background: var(--wall); }
+.blob { position: absolute; border-radius: 50%; filter: blur(70px); opacity: .9; will-change: transform; }
+.blob.jade { width: 56vmax; height: 56vmax; left: -14vmax; top: -18vmax; background: radial-gradient(circle at 40% 40%, var(--blob-jade), transparent 68%); }
+.blob.apricot { width: 46vmax; height: 46vmax; right: -12vmax; top: 18vh; background: radial-gradient(circle at 50% 50%, var(--blob-apricot), transparent 66%); }
+.blob.sea { width: 52vmax; height: 52vmax; left: 20vw; bottom: -26vmax; background: radial-gradient(circle at 50% 50%, var(--blob-sea), transparent 66%); }
+.wallpaper::after { /* a fine dot grid, so the desktop has a little texture */
+  content: ""; position: absolute; inset: 0; opacity: .35;
+  background-image: radial-gradient(var(--edge) 1px, transparent 1.2px); background-size: 22px 22px;
+}
+
+/* ---------------------------------------------------------------- glass */
+.glass {
+  position: relative; background-color: var(--glass); border: 1px solid var(--glass-line);
+  box-shadow: var(--shadow); border-radius: var(--r-win);
+  -webkit-backdrop-filter: blur(22px) saturate(170%); backdrop-filter: blur(22px) saturate(170%);
+}
+.glass::before { /* a soft highlight that follows the pointer */
+  content: ""; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: radial-gradient(420px circle at var(--mx, -500px) var(--my, -500px), var(--shine), transparent 45%);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .glass { background-color: var(--glass-hi); } }
+
+/* ---------------------------------------------------------------- menu bar */
+.menubar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; margin: 12px auto 0; max-width: 1120px;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 10px 8px 14px; border-radius: 16px;
+}
+.brand { display: inline-flex; align-items: center; gap: 9px; color: var(--fg); text-decoration: none; font: 700 17px/1 var(--display); letter-spacing: -.01em; }
+.brand svg { width: 24px; height: 24px; }
+.menubar .right { display: flex; align-items: center; gap: 8px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 11px; border-radius: 999px; font: 600 13px/1 var(--body);
+        color: var(--muted); background: var(--accent-soft); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.chip svg { width: 14px; height: 14px; }
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 18px; border-radius: 13px;
+       font: 600 15px/1 var(--body); text-decoration: none; color: var(--fg); background: var(--glass-hi);
+       border: 1px solid var(--glass-line); box-shadow: 0 1px 0 var(--shine) inset; transition: transform .2s, box-shadow .2s; }
+.btn:hover { transform: translateY(-1px); box-shadow: 0 1px 0 var(--shine) inset, 0 10px 24px -14px rgba(0, 0, 0, .5); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+.btn.small { padding: 8px 12px; font-size: 13px; border-radius: 10px; }
+.btn svg { width: 16px; height: 16px; }
+
+/* ---------------------------------------------------------------- page frame */
+main { max-width: 1120px; margin: 0 auto; display: grid; gap: 28px; }
+section { display: grid; gap: 18px; min-width: 0; }
+.section-head { display: grid; gap: 10px; max-width: 680px; padding: 24px 4px 0; }
+.section-head p { color: var(--muted); font-size: 17px; }
+
+/* ---------------------------------------------------------------- hero */
+.hero { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); gap: 36px; align-items: center; padding: 44px 0 6px; }
+.hero h1 { font-size: clamp(38px, 6vw, 64px); line-height: 1.02; letter-spacing: -.04em; font-weight: 800; }
+.hero h1 em { font-style: normal; color: var(--accent); }
+.hero .lead { margin-top: 18px; font-size: clamp(17px, 1.6vw, 20px); color: var(--muted); max-width: 34em; }
+.hero .cta { margin-top: 26px; display: flex; flex-wrap: wrap; gap: 12px; }
+
+/* window chrome */
+.titlebar { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-bottom: 1px solid var(--edge); }
+.lights { display: inline-flex; gap: 7px; }
+.lights i { width: 12px; height: 12px; border-radius: 50%; background: #ff5f57; box-shadow: 0 0 0 .5px rgba(0, 0, 0, .25) inset; }
+.lights i:nth-child(2) { background: #febc2e; } .lights i:nth-child(3) { background: #28c840; }
+.wintitle { font: 600 13px/1 var(--body); color: var(--muted); }
+.tag { margin-left: auto; font: 700 11px/1 var(--body); letter-spacing: .08em; text-transform: uppercase; color: var(--warm);
+       background: var(--warm-soft); padding: 5px 8px; border-radius: 6px; }
+
+/* the demo window */
+.demo { overflow: hidden; }
+.demo-body { padding: 16px; display: grid; gap: 14px; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.stat { background: var(--glass-hi); border: 1px solid var(--glass-line); border-radius: 14px; padding: 10px 12px; }
+.stat b { display: block; font: 800 24px/1.1 var(--display); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.stat span { font-size: 12px; color: var(--muted); }
+.queue { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.row { display: grid; grid-template-columns: 36px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 9px 10px;
+       border-radius: 14px; background: var(--glass-hi); border: 1px solid var(--glass-line); transition: background .4s, transform .4s; }
+.row.is-writing { transform: translateX(4px); background: var(--accent-soft); }
+.avatar { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font: 700 13px/1 var(--display);
+          color: var(--accent-ink); background: var(--accent); }
+.row:nth-child(2) .avatar { background: var(--sky); } .row:nth-child(3) .avatar { background: var(--warm); }
+.row:nth-child(4) .avatar { background: var(--faint); }
+.who { display: grid; min-width: 0; }
+.who b { font-size: 14px; } .who small { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.pill { font: 700 11px/1 var(--body); letter-spacing: .04em; padding: 6px 9px; border-radius: 999px; white-space: nowrap; transition: background .3s, color .3s; }
+.pill[data-state="queued"] { color: var(--faint); background: var(--edge); }
+.pill[data-state="finding"] { color: var(--sky); background: var(--sky-soft); }
+.pill[data-state="writing"] { color: var(--warm); background: var(--warm-soft); }
+.pill[data-state="sent"] { color: var(--accent); background: var(--accent-soft); }
+.note { border-radius: 14px; padding: 12px 14px; background: var(--glass-hi); border: 1px dashed var(--accent); }
+.note-head { display: flex; justify-content: space-between; gap: 8px; font: 600 12px/1.2 var(--body); color: var(--muted); margin-bottom: 6px; font-variant-numeric: tabular-nums; }
+.note p { font-size: 14px; line-height: 1.5; }
+
+/* system alert */
+.alert { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 14px; padding: 18px 20px; border-radius: 18px; }
+.alert .ico { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--warm-soft); color: var(--warm); }
+.alert .ico svg { width: 22px; height: 22px; }
+.alert strong { display: block; font: 700 16px/1.3 var(--display); margin-bottom: 4px; }
+.alert p { color: var(--muted); font-size: 15px; }
+
+/* ---------------------------------------------------------------- how it works: three widgets */
+.widgets { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.widget { padding: 18px; display: grid; gap: 12px; align-content: start; }
+.widget p { color: var(--muted); font-size: 15px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips span { font: 600 12px/1 var(--body); padding: 7px 10px; border-radius: 999px; background: var(--glass-hi); border: 1px solid var(--glass-line); }
+.template { font: 13px/1.6 var(--mono); padding: 10px 12px; border-radius: 12px; background: var(--glass-hi); border: 1px solid var(--glass-line); }
+.template mark { background: var(--accent-soft); color: var(--accent); border-radius: 5px; padding: 0 3px; }
+.bars { display: grid; grid-template-columns: repeat(7, 1fr); align-items: end; gap: 6px; height: 96px; }
+.bars div { display: grid; gap: 4px; justify-items: center; align-self: end; }
+.bars i { width: 100%; max-width: 22px; border-radius: 6px 6px 3px 3px; background: var(--accent); opacity: .85; }
+.bars span { font: 600 10px/1 var(--body); color: var(--faint); }
+.bars .rest i { background: var(--edge); opacity: 1; }
+
+/* ---------------------------------------------------------------- steps */
+.steps { list-style: none; margin: 0; padding: 0; display: grid; gap: 18px; }
+.step { overflow: hidden; }
+.step .titlebar .num { font: 800 13px/1 var(--display); color: var(--accent-ink); background: var(--accent); border-radius: 8px; padding: 5px 8px; font-variant-numeric: tabular-nums; }
+.step .titlebar h3 { font-size: 16px; }
+.step-body { padding: 16px 18px 18px; display: grid; gap: 12px; min-width: 0; }
+.step-body > p { color: var(--muted); max-width: 70ch; }
+.note-line { font-size: 14px; color: var(--muted); }
+.req { display: flex; flex-wrap: wrap; gap: 8px; }
+.req span { font: 600 13px/1 var(--body); padding: 8px 12px; border-radius: 999px; background: var(--glass-hi); border: 1px solid var(--glass-line); }
+
+/* terminal */
+.term { position: relative; border-radius: 14px; background: var(--term); color: var(--term-fg); border: 1px solid rgba(255, 255, 255, .08);
+        box-shadow: 0 1px 0 rgba(255, 255, 255, .06) inset; min-width: 0; }
+.term-bar { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-bottom: 1px solid rgba(255, 255, 255, .07);
+            font: 600 12px/1 var(--body); color: var(--term-dim); }
+.term-bar .lights i { width: 10px; height: 10px; }
+.term pre { margin: 0; padding: 14px 16px; overflow-x: auto; font-size: 14px; line-height: 1.7; }
+.term code { display: block; min-width: max-content; }
+.ln { display: block; }
+.ln::before { content: "$ "; color: var(--term-prompt); }
+.term .c { color: var(--term-dim); }
+.copy { margin-left: auto; font: 600 12px/1 var(--body); padding: 6px 10px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, .14);
+        background: rgba(255, 255, 255, .06); color: var(--term-fg); cursor: pointer; }
+.copy:hover { background: rgba(255, 255, 255, .14); }
+.seg { display: inline-flex; padding: 3px; gap: 3px; border-radius: 12px; background: var(--glass-hi); border: 1px solid var(--glass-line); width: fit-content; }
+.seg button { font: 600 13px/1 var(--body); padding: 8px 14px; border: 0; border-radius: 9px; background: transparent; color: var(--muted); cursor: pointer; }
+.seg button[aria-selected="true"] { background: var(--accent); color: var(--accent-ink); }
+code.inline { font-size: .9em; padding: 2px 6px; border-radius: 6px; background: var(--accent-soft); color: var(--fg); }
+
+/* ---------------------------------------------------------------- spotlight */
+.spotlight { padding: 10px; display: grid; gap: 8px; }
+.search { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 14px; background: var(--glass-hi); border: 1px solid var(--glass-line); }
+.search svg { width: 18px; height: 18px; color: var(--muted); flex: none; }
+.search input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--fg); font: 500 17px/1.2 var(--body); }
+.search:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cmds { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.cmd { display: grid; grid-template-columns: minmax(0, auto) minmax(0, 1fr) auto; align-items: center; gap: 16px; padding: 11px 14px; border-radius: 12px; }
+.cmd:hover { background: var(--accent-soft); }
+.cmd code { font-size: 14px; color: var(--fg); white-space: nowrap; }
+.cmd span { color: var(--muted); font-size: 14px; }
+.cmd kbd { font: 600 11px/1 var(--body); color: var(--faint); border: 1px solid var(--edge); border-radius: 6px; padding: 4px 6px; }
+.empty { padding: 14px; color: var(--muted); font-size: 14px; }
+
+/* ---------------------------------------------------------------- AI + safety */
+.split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: start; }
+.panel { padding: 20px; display: grid; gap: 14px; align-content: start; min-width: 0; }
+.panel p { color: var(--muted); }
+.gauges { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.gauge { display: grid; justify-items: center; gap: 8px; text-align: center; padding: 14px 8px; border-radius: 16px; background: var(--glass-hi); border: 1px solid var(--glass-line); }
+.dial { position: relative; width: 88px; height: 88px; }
+.dial svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.dial .track { fill: none; stroke: var(--edge); stroke-width: 8; }
+.dial .fill { fill: none; stroke: var(--accent); stroke-width: 8; stroke-linecap: round; stroke-dasharray: 220; stroke-dashoffset: calc(220 * (1 - var(--p))); }
+.dial b { position: absolute; inset: 0; display: grid; place-items: center; font: 800 24px/1 var(--display); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.gauge small { color: var(--muted); font-size: 13px; line-height: 1.35; }
+.promises { display: grid; gap: 10px; }
+.promise { display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 12px; align-items: start; padding: 12px 14px; border-radius: 14px; background: var(--glass-hi); border: 1px solid var(--glass-line); }
+.promise .ico { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }
+.promise .ico svg { width: 19px; height: 19px; }
+.promise b { display: block; font-size: 15px; }
+.promise span { color: var(--muted); font-size: 14px; }
+
+/* ---------------------------------------------------------------- FAQ, in the style of a settings list */
+.settings { padding: 6px; }
+.settings details + details { border-top: 1px solid var(--edge); }
+.settings summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 15px 16px; font-weight: 600; border-radius: 14px; }
+.settings summary::-webkit-details-marker { display: none; }
+.settings summary::after { content: ""; width: 9px; height: 9px; border-right: 2px solid var(--faint); border-bottom: 2px solid var(--faint); transform: rotate(-45deg); transition: transform .25s; flex: none; }
+.settings details[open] summary::after { transform: rotate(45deg); }
+.settings details p { padding: 0 16px 16px; color: var(--muted); max-width: 72ch; }
+
+/* ---------------------------------------------------------------- footer + dock */
+footer { max-width: 1120px; margin: 36px auto 0; padding: 18px 20px; border-radius: 18px; color: var(--muted); font-size: 14px; display: grid; gap: 6px; }
+footer nav { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.dock {
+  position: fixed; z-index: 30; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+  display: flex; gap: 6px; padding: 8px; border-radius: 22px;
+}
+.dock a { position: relative; width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; color: var(--fg);
+          background: var(--glass-hi); border: 1px solid var(--glass-line); text-decoration: none;
+          transition: transform .22s cubic-bezier(.2, .8, .2, 1), background .2s; }
+.dock a svg { width: 22px; height: 22px; }
+.dock a span { position: absolute; bottom: calc(100% + 10px); left: 50%; transform: translate(-50%, 4px); opacity: 0; pointer-events: none;
+               font: 600 12px/1 var(--body); padding: 6px 9px; border-radius: 8px; white-space: nowrap; color: var(--fg);
+               background: var(--glass-hi); border: 1px solid var(--glass-line); transition: opacity .15s, transform .15s; }
+.dock a:hover, .dock a:focus-visible { transform: translateY(-8px) scale(1.14); }
+.dock a:hover span, .dock a:focus-visible span { opacity: 1; transform: translate(-50%, 0); }
+.dock a.active::after { content: ""; position: absolute; bottom: -6px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+
+/* ---------------------------------------------------------------- narrow screens */
+@media (max-width: 900px) {
+  .hero, .split { grid-template-columns: minmax(0, 1fr); }
+  .widgets { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 560px) {
+  .menubar .chip { display: none; }
+  .stats, .gauges { gap: 8px; }
+  .dial { width: 72px; height: 72px; } .dial b { font-size: 20px; }
+  .cmd { grid-template-columns: minmax(0, 1fr); gap: 4px; } .cmd kbd { display: none; }
+  .dock { gap: 4px; padding: 6px; } .dock a { width: 42px; height: 42px; }
+}
+
+/* ---------------------------------------------------------------- motion, only when it is welcome */
+@media (prefers-reduced-motion: no-preference) {
+  .blob.jade { animation: drift-a 34s ease-in-out infinite alternate; }
+  .blob.apricot { animation: drift-b 40s ease-in-out infinite alternate; }
+  .blob.sea { animation: drift-c 46s ease-in-out infinite alternate; }
+  .hero-copy > * { animation: rise .8s cubic-bezier(.2, .8, .2, 1) both; }
+  .hero-copy > :nth-child(2) { animation-delay: .08s; } .hero-copy > :nth-child(3) { animation-delay: .16s; }
+  .demo { animation: open .9s .12s cubic-bezier(.2, .8, .2, 1) both; }
+  @supports (animation-timeline: view()) {
+    .reveal { animation: reveal linear both; animation-timeline: view(); animation-range: entry 0% entry 70%; }
+    .dial .fill { animation: ring linear both; animation-timeline: view(); animation-range: entry 10% cover 40%; }
   }
-  * { box-sizing: border-box; }
-  html { scroll-behavior: smooth; }
-  body {
-    margin: 0; background: var(--bg); color: var(--fg); line-height: 1.6;
-    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  }
-  a { color: var(--accent); }
-  .wrap { max-width: 820px; margin: 0 auto; padding: 0 20px; }
-  header.top { border-bottom: 1px solid var(--line); background: var(--bg); position: sticky; top: 0; z-index: 2; }
-  header.top .wrap { display: flex; align-items: center; justify-content: space-between; height: 56px; gap: 16px; }
-  .brand { font-weight: 700; font-size: 18px; color: var(--fg); text-decoration: none; letter-spacing: -0.01em; }
-  .brand span { color: var(--accent); }
-  nav { display: flex; gap: 18px; flex-wrap: wrap; font-size: 14px; }
-  nav a { color: var(--muted); text-decoration: none; }
-  nav a:hover { color: var(--fg); }
-  .hero { padding: 56px 0 28px; }
-  h1 { font-size: clamp(30px, 5vw, 44px); line-height: 1.15; letter-spacing: -0.02em; margin: 0 0 16px; }
-  h2 { font-size: 26px; letter-spacing: -0.01em; margin: 56px 0 12px; }
-  h3 { font-size: 18px; margin: 0 0 6px; }
-  .lead { font-size: 19px; color: var(--muted); margin: 0 0 24px; max-width: 680px; }
-  .cta { display: flex; gap: 12px; flex-wrap: wrap; }
-  .btn { display: inline-block; padding: 10px 18px; border-radius: 8px; border: 1px solid var(--line); background: var(--card);
-         color: var(--fg); text-decoration: none; font-weight: 600; font-size: 15px; }
-  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
-  .caution { margin: 28px 0 0; padding: 16px 18px; border: 1px solid var(--warn-line); background: var(--warn-bg);
-             border-radius: var(--radius); font-size: 15px; }
-  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; }
-  .card h3 { font-size: 16px; }
-  .card p { margin: 0; color: var(--muted); font-size: 15px; }
-  @media (max-width: 680px) { .grid3 { grid-template-columns: 1fr; } nav { gap: 12px; } }
-  .needs { color: var(--muted); }
-  ol.steps { list-style: none; counter-reset: step; padding: 0; margin: 24px 0 0; }
-  ol.steps > li { counter-increment: step; position: relative; padding: 0 0 30px 52px; border-left: 2px solid var(--line);
-                  margin-left: 17px; }
-  ol.steps > li:last-child { border-left-color: transparent; padding-bottom: 0; }
-  ol.steps > li::before { content: counter(step); position: absolute; left: -18px; top: -2px; width: 34px; height: 34px;
-                          border-radius: 50%; background: var(--accent); color: var(--accent-ink); font-weight: 700;
-                          display: flex; align-items: center; justify-content: center; font-size: 15px; }
-  ol.steps p { margin: 4px 0 10px; }
-  .code { position: relative; margin: 10px 0; }
-  pre { margin: 0; padding: 14px 16px; padding-right: 72px; background: var(--code-bg); color: var(--code-fg); border-radius: 8px;
-        overflow-x: auto; font: 14px/1.55 var(--mono); border: 1px solid var(--line); }
-  pre .c { color: var(--muted); }
-  code { font-family: var(--mono); font-size: 0.92em; background: var(--code-bg); padding: 1px 5px; border-radius: 4px; }
-  pre code { background: none; padding: 0; font-size: inherit; }
-  .copy { position: absolute; top: 8px; right: 8px; font: 600 12px/1 inherit; padding: 6px 9px; border-radius: 6px;
-          border: 1px solid var(--line); background: var(--card); color: var(--muted); cursor: pointer; }
-  .copy:hover { color: var(--fg); }
-  .tabs { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin: 6px 0 0; }
-  .tabs button { font: 600 13px/1 inherit; padding: 8px 14px; border: 0; background: var(--card); color: var(--muted); cursor: pointer; }
-  .tabs button[aria-selected="true"] { background: var(--accent-soft); color: var(--fg); }
-  .note { font-size: 14px; color: var(--muted); }
-  table { width: 100%; border-collapse: collapse; font-size: 15px; }
-  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
-  th { color: var(--muted); font-weight: 600; font-size: 13px; }
-  td code { white-space: nowrap; }
-  @media (max-width: 680px) {
-    td code { white-space: normal; overflow-wrap: anywhere; }
-    ol.steps > li { padding-left: 40px; margin-left: 14px; }
-    header.top .wrap { height: auto; min-height: 56px; flex-wrap: wrap; padding-top: 10px; padding-bottom: 10px; row-gap: 6px; }
-    nav { gap: 14px; }
-  }
-  .limits { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 16px 0; }
-  .limit { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; }
-  .limit b { display: block; font-size: 28px; letter-spacing: -0.02em; }
-  .limit span { color: var(--muted); font-size: 14px; }
-  @media (max-width: 680px) { .limits { grid-template-columns: 1fr; } }
-  details { border-bottom: 1px solid var(--line); padding: 12px 0; }
-  summary { cursor: pointer; font-weight: 600; }
-  details p { margin: 8px 0 0; color: var(--muted); }
-  footer { margin: 64px 0 0; padding: 24px 0 40px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
-  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+}
+@keyframes drift-a { to { transform: translate(8vmax, 6vmax) rotate(25deg) scale(1.08); } }
+@keyframes drift-b { to { transform: translate(-10vmax, 8vmax) rotate(-20deg) scale(.92); } }
+@keyframes drift-c { to { transform: translate(-6vmax, -8vmax) rotate(15deg) scale(1.1); } }
+@keyframes rise { from { opacity: .4; transform: translateY(22px) scale(.985); } }
+@keyframes reveal { from { opacity: .65; transform: translateY(16px) scale(.99); } }
+@keyframes open { from { opacity: .5; transform: translateY(14px) scale(.96); } }
+@keyframes ring { from { stroke-dashoffset: 220; } }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; } }
 </style>
 </head>
 <body>
-<header class="top">
-  <div class="wrap">
-    <a class="brand" href="#">Connect<span>o</span></a>
-    <nav aria-label="Sections">
-      <a href="#start">Get started</a>
-      <a href="#daily">Every day</a>
-      <a href="#safety">Safety</a>
-      <a href="#faq">FAQ</a>
-      <a data-repo href="https://github.com/devanshxNishu/connecto">GitHub</a>
-    </nav>
+<div class="wallpaper" aria-hidden="true"><div class="blob jade"></div><div class="blob apricot"></div><div class="blob sea"></div></div>
+
+<header class="menubar glass">
+  <a class="brand" href="#top" aria-label="Connecto, back to the top">
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="9" cy="12" r="6.2" stroke="currentColor" stroke-width="2"/><circle cx="15" cy="12" r="6.2" stroke="var(--accent)" stroke-width="2"/></svg>
+    Connecto
+  </a>
+  <div class="right">
+    <span class="chip" title="When Connecto runs by itself, unless you change it">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+      Daily runs 10:40 · 18:20
+    </span>
+    <a class="btn small" data-repo href="https://github.com/devanshxNishu/connecto">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M8 7l-5 5 5 5M16 7l5 5-5 5"/></svg>
+      GitHub
+    </a>
   </div>
 </header>
 
-<main class="wrap">
-  <section class="hero">
-    <h1>Grow your LinkedIn network, a few careful requests a day</h1>
-    <p class="lead">Connecto finds the people you want to meet, writes a personal note for each of them and sends a small
-      number of connection requests every day. It runs on your own computer, in your own browser. Free and open source.</p>
-    <div class="cta">
-      <a class="btn primary" href="#start">Get started</a>
-      <a class="btn" data-repo href="https://github.com/devanshxNishu/connecto">View on GitHub</a>
+<main id="top">
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero-copy">
+      <h1 id="hero-title">Grow your LinkedIn network, <em>a few careful requests a day</em></h1>
+      <p class="lead">Connecto finds the people you want to meet, writes a personal note for each of them and sends a small number
+        of connection requests every day. It runs on your own computer, in your own browser. Free and open source.</p>
+      <div class="cta">
+        <a class="btn primary" href="#start">Get started</a>
+        <a class="btn" data-repo href="https://github.com/devanshxNishu/connecto">View on GitHub</a>
+      </div>
     </div>
-    <div class="caution" role="note">
-      <strong>Read this first.</strong> LinkedIn does not permit automated activity, and it can restrict accounts that use
-      automation tools. Connecto keeps the numbers low and stops at the first sign of trouble, which lowers that risk. It does
-      not remove it. Use Connecto only if you accept the risk for your own account.
+
+    <div class="demo glass" role="img" aria-label="Example: Connecto's queue for today, with one note being written">
+      <div class="titlebar">
+        <span class="lights" aria-hidden="true"><i></i><i></i><i></i></span>
+        <span class="wintitle">Connecto · Today</span>
+        <span class="tag">Example</span>
+      </div>
+      <div class="demo-body">
+        <div class="stats">
+          <div class="stat"><b id="sent-count">4</b><span>sent today</span></div>
+          <div class="stat"><b>12</b><span>planned</span></div>
+          <div class="stat"><b>30</b><span>daily max</span></div>
+        </div>
+        <ul class="queue">
+          <li class="row" data-first="Priya" data-company="Acme Pay" data-batch="S26"><span class="avatar" aria-hidden="true">PS</span>
+            <span class="who"><b>Priya S.</b><small>Co-founder · Acme Pay · YC S26</small></span><span class="pill" data-state="sent">Sent</span></li>
+          <li class="row is-writing" data-first="Leo" data-company="Northwind" data-batch="F26"><span class="avatar" aria-hidden="true">LM</span>
+            <span class="who"><b>Leo M.</b><small>CTO · Northwind · YC F26</small></span><span class="pill" data-state="writing">Writing</span></li>
+          <li class="row" data-first="Ana" data-company="Loom Studio" data-batch="S26"><span class="avatar" aria-hidden="true">AR</span>
+            <span class="who"><b>Ana R.</b><small>Founder · Loom Studio · YC S26</small></span><span class="pill" data-state="finding">Finding</span></li>
+          <li class="row" data-first="Kai" data-company="Tidewater Labs" data-batch="F26"><span class="avatar" aria-hidden="true">KT</span>
+            <span class="who"><b>Kai T.</b><small>Founder · Tidewater Labs · YC F26</small></span><span class="pill" data-state="queued">Queued</span></li>
+        </ul>
+        <div class="note">
+          <div class="note-head"><span id="note-to">Note to Leo</span><span id="note-len">164 / 300</span></div>
+          <p id="note-text">Hi Leo, congrats on Northwind getting into YC (F26)! I'm Asha, a designer in Pune building tools for small shops. Would love to connect and learn from your journey.</p>
+        </div>
+      </div>
     </div>
   </section>
+
+  <div class="alert glass" role="note">
+    <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l9.5 17H2.5L12 3z"/><path d="M12 10v4M12 17.5v.5"/></svg></div>
+    <div><strong>Read this first</strong>
+      <p>LinkedIn does not permit automated activity, and it can restrict accounts that use automation tools. Connecto keeps the
+        numbers low and stops at the first sign of trouble, which lowers that risk. It does not remove it. Use Connecto only if you
+        accept the risk for your own account.</p></div>
+  </div>
 
   <section aria-labelledby="how">
-    <h2 id="how">How it works</h2>
-    <div class="grid3">
-      <div class="card"><h3>1. Find</h3><p>From the YC startup directory, a CSV file, any web page with profiles, a LinkedIn
-        search, or a list you type.</p></div>
-      <div class="card"><h3>2. Write</h3><p>A personal note from your own templates. Optionally, AI adds one checked opening
-        line.</p></div>
-      <div class="card"><h3>3. Send</h3><p>A few requests a day, inside hard limits, from your own browser. You read every
-        note first.</p></div>
+    <div class="section-head"><span class="kicker">How it works</span><h2 id="how">Find, write, send. A little every day.</h2></div>
+    <div class="widgets">
+      <div class="widget glass reveal"><h3>1. Find</h3>
+        <div class="chips"><span>YC directory</span><span>CSV file</span><span>Any web page</span><span>LinkedIn search</span><span>A typed list</span></div>
+        <p>Pick who you want to meet: founders from a YC batch, people from an event list, a search you trust.</p></div>
+      <div class="widget glass reveal"><h3>2. Write</h3>
+        <div class="template">Hi <mark>{first_name}</mark>, congrats on <mark>{company}</mark> getting into YC (<mark>{batch_code}</mark>)!</div>
+        <p>Every note comes from your own templates. Optionally, AI adds one checked opening line.</p></div>
+      <div class="widget glass reveal"><h3>3. Send</h3>
+        <div class="bars" role="img" aria-label="Example week: between 8 and 12 requests on Monday to Saturday, none on Sunday">
+          <div><i style="height:54px"></i><span>Mon</span></div><div><i style="height:66px"></i><span>Tue</span></div>
+          <div><i style="height:48px"></i><span>Wed</span></div><div><i style="height:72px"></i><span>Thu</span></div>
+          <div><i style="height:60px"></i><span>Fri</span></div><div><i style="height:54px"></i><span>Sat</span></div>
+          <div class="rest"><i style="height:6px"></i><span>Sun</span></div>
+        </div>
+        <p>8 to 12 a day by default, Monday to Saturday, from your own browser. You read every note first.</p></div>
     </div>
   </section>
 
-  <section aria-labelledby="start">
-    <h2 id="start">Get started</h2>
-    <p class="needs">You need <strong>Python 3.10 or newer</strong>, <strong>Google Chrome</strong> (or Microsoft Edge) and a
-      LinkedIn account. It takes about 10 minutes. Connecto is developed and tested on Linux; macOS and Windows work but have
-      had less real-world use, so please report anything odd.</p>
+  <section id="start" aria-labelledby="start-title">
+    <div class="section-head"><span class="kicker">Get started</span><h2 id="start-title">From zero to your first request in about 10 minutes</h2>
+      <p>Connecto is developed and tested on Linux. macOS and Windows work but have had less real-world use, so please report anything odd.</p></div>
+    <div class="req"><span>Python 3.10 or newer</span><span>Google Chrome or Microsoft Edge</span><span>A LinkedIn account</span></div>
 
     <ol class="steps">
-      <li>
-        <h3>Install Connecto</h3>
-        <p>Open a terminal (on a Mac: the Terminal app) and run these lines one at a time.</p>
-        <div class="tabs" role="tablist" aria-label="Operating system">
-          <button role="tab" id="tab-unix" aria-controls="os-unix" aria-selected="true">macOS and Linux</button>
-          <button role="tab" id="tab-win" aria-controls="os-win" aria-selected="false">Windows</button>
+      <li class="step glass reveal">
+        <div class="titlebar"><span class="num">1</span><h3>Install Connecto</h3></div>
+        <div class="step-body">
+          <p>Open a terminal (on a Mac: the Terminal app) and run these lines one at a time.</p>
+          <div class="seg" role="tablist" aria-label="Operating system">
+            <button role="tab" id="tab-unix" aria-controls="os-unix" aria-selected="true">macOS and Linux</button>
+            <button role="tab" id="tab-win" aria-controls="os-win" aria-selected="false">Windows</button>
+          </div>
+          <div class="term" id="os-unix" role="tabpanel" aria-labelledby="tab-unix">
+            <div class="term-bar"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span>Terminal</div>
+<pre><code><span class="ln">git clone https://github.com/<span class="gh-user">devanshxNishu</span>/connecto.git</span><span class="ln">cd connecto</span><span class="ln">python3 -m venv .venv</span><span class="ln">source .venv/bin/activate</span><span class="ln">pip install .</span><span class="ln">connecto doctor</span></code></pre>
+          </div>
+          <div class="term" id="os-win" role="tabpanel" aria-labelledby="tab-win" hidden>
+            <div class="term-bar"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span>PowerShell</div>
+<pre><code><span class="ln">git clone https://github.com/<span class="gh-user">devanshxNishu</span>/connecto.git</span><span class="ln">cd connecto</span><span class="ln">py -m venv .venv</span><span class="ln">.venv\Scripts\Activate.ps1</span><span class="ln">pip install .</span><span class="ln">connecto doctor</span></code></pre>
+          </div>
+          <p class="note-line"><code class="inline">connecto doctor</code> tells you if anything is missing and changes nothing. No Chrome or Edge? Run
+            <code class="inline">python -m playwright install chromium</code> once. In every new terminal window, go to the folder and activate
+            <code class="inline">.venv</code> again before you use <code class="inline">connecto</code>.</p>
         </div>
-        <div class="code" id="os-unix" role="tabpanel" aria-labelledby="tab-unix">
-<pre><code>git clone https://github.com/<span class="gh-user">devanshxNishu</span>/connecto.git
-cd connecto
-python3 -m venv .venv
-source .venv/bin/activate
-pip install .
-connecto doctor</code></pre>
+      </li>
+
+      <li class="step glass reveal">
+        <div class="titlebar"><span class="num">2</span><h3>Open the setup page</h3></div>
+        <div class="step-body">
+          <div class="term"><div class="term-bar"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span>Terminal</div>
+<pre><code><span class="ln">connecto ui</span></code></pre></div>
+          <p>A private page opens in your browser. It runs only on your computer (127.0.0.1). Read the risk note and accept it, tell
+            Connecto your first name and what you work on, choose who you want to meet, and write your notes. Prefer the terminal?
+            <code class="inline">connecto init</code> asks the same questions.</p>
         </div>
-        <div class="code" id="os-win" role="tabpanel" aria-labelledby="tab-win" hidden>
-<pre><code>git clone https://github.com/<span class="gh-user">devanshxNishu</span>/connecto.git
-cd connecto
-py -m venv .venv
-.venv\Scripts\Activate.ps1
-pip install .
-connecto doctor</code></pre>
+      </li>
+
+      <li class="step glass reveal">
+        <div class="titlebar"><span class="num">3</span><h3>Sign in to LinkedIn</h3></div>
+        <div class="step-body">
+          <p>On the setup page, press <strong>Sign in to LinkedIn</strong>. Or run:</p>
+          <div class="term"><div class="term-bar"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span>Terminal</div>
+<pre><code><span class="ln">connecto login</span></code></pre></div>
+          <p>A browser window opens at LinkedIn. Sign in yourself, the way you always do. Connecto never asks for, sees or stores your
+            password. It keeps the signed-in session in its own browser profile on your computer, and
+            <code class="inline">connecto logout</code> deletes it.</p>
         </div>
-        <p class="note"><code>connecto doctor</code> tells you if anything is missing and changes nothing. No Chrome or Edge? Run
-          <code>python -m playwright install chromium</code> once. In every new terminal window, go to the folder and activate
-          <code>.venv</code> again before you use <code>connecto</code>.</p>
       </li>
 
-      <li>
-        <h3>Open the setup page</h3>
-        <div class="code"><pre><code>connecto ui</code></pre></div>
-        <p>A private page opens in your browser. It runs only on your computer (127.0.0.1). Read the risk note and accept it,
-          tell Connecto your first name and what you work on, choose who you want to meet, and write your notes. Prefer the
-          terminal? <code>connecto init</code> asks the same questions.</p>
+      <li class="step glass reveal">
+        <div class="titlebar"><span class="num">4</span><h3>Collect people and read the notes</h3></div>
+        <div class="step-body">
+          <div class="term"><div class="term-bar"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span>Terminal</div>
+<pre><code><span class="ln">connecto fetch      <span class="c"># collect people from your sources</span></span><span class="ln">connecto preview    <span class="c"># who is next, and the note each person would get</span></span></code></pre></div>
+          <p>Nothing is sent in this step.</p>
+        </div>
       </li>
 
-      <li>
-        <h3>Sign in to LinkedIn</h3>
-        <p>On the setup page, press <strong>Sign in to LinkedIn</strong>. Or run:</p>
-        <div class="code"><pre><code>connecto login</code></pre></div>
-        <p>A browser window opens at LinkedIn. Sign in yourself, the way you always do. Connecto never asks for, sees or stores
-          your password. It keeps the signed-in session in its own browser profile on your computer, and
-          <code>connecto logout</code> deletes it.</p>
+      <li class="step glass reveal">
+        <div class="titlebar"><span class="num">5</span><h3>Send the first few, and watch</h3></div>
+        <div class="step-body">
+          <div class="term"><div class="term-bar"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span>Terminal</div>
+<pre><code><span class="ln">connecto run --dry-run    <span class="c"># visits profiles, shows what would happen, sends nothing</span></span><span class="ln">connecto run --limit 3    <span class="c"># sends at most 3, after you confirm</span></span></code></pre></div>
+          <p>Watch the browser window. If LinkedIn shows a warning or a check, Connecto stops, and so should you for a few days.</p>
+        </div>
       </li>
 
-      <li>
-        <h3>Collect people and read the notes</h3>
-        <div class="code"><pre><code>connecto fetch      <span class="c"># collect people from your sources</span>
-connecto preview    <span class="c"># who is next, and the note each person would get</span></code></pre></div>
-        <p>Nothing is sent in this step.</p>
-      </li>
-
-      <li>
-        <h3>Send the first few, and watch</h3>
-        <div class="code"><pre><code>connecto run --dry-run    <span class="c"># visits profiles, shows what would happen, sends nothing</span>
-connecto run --limit 3    <span class="c"># sends at most 3, after you confirm</span></code></pre></div>
-        <p>Watch the browser window. If LinkedIn shows a warning or a check, Connecto stops, and so should you for a few days.</p>
-      </li>
-
-      <li>
-        <h3>Let it run every day</h3>
-        <div class="code"><pre><code>connecto schedule install
-connecto schedule status</code></pre></div>
-        <p>It runs at 10:40 and 18:20 by default (change this in the settings or with <code>--times</code>), only inside your
-          active hours, and collects new people before each run. Keep your computer on and signed in to your user account.</p>
+      <li class="step glass reveal">
+        <div class="titlebar"><span class="num">6</span><h3>Let it run every day</h3></div>
+        <div class="step-body">
+          <div class="term"><div class="term-bar"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span>Terminal</div>
+<pre><code><span class="ln">connecto schedule install</span><span class="ln">connecto schedule status</span></code></pre></div>
+          <p>It runs at 10:40 and 18:20 by default (change this in the settings or with <code class="inline">--times</code>), only inside
+            your active hours, and collects new people before each run. Keep your computer on and signed in to your user account.</p>
+        </div>
       </li>
     </ol>
   </section>
 
-  <section aria-labelledby="daily">
-    <h2 id="daily">Every day</h2>
-    <table>
-      <thead><tr><th scope="col">Command</th><th scope="col">What it does</th></tr></thead>
-      <tbody>
-        <tr><td><code>connecto report</code></td><td>What has been sent, and what is coming.</td></tr>
-        <tr><td><code>connecto preview</code></td><td>The next people and their notes. Sends nothing.</td></tr>
-        <tr><td><code>connecto pause --days 3</code></td><td>Stop sending for a while.</td></tr>
-        <tr><td><code>connecto resume</code></td><td>Lift the pause.</td></tr>
-        <tr><td><code>connecto add LINK</code></td><td>Add someone by hand, from a profile link, a text file or a CSV.</td></tr>
-        <tr><td><code>connecto skip LINK</code></td><td>Never contact this profile.</td></tr>
-        <tr><td><code>connecto export --out history.csv</code></td><td>Your invitation history as a spreadsheet.</td></tr>
-        <tr><td><code>connecto schedule uninstall</code></td><td>Stop the daily runs.</td></tr>
-        <tr><td><code>connecto doctor</code></td><td>Check that everything is in place.</td></tr>
-      </tbody>
-    </table>
-  </section>
-
-  <section aria-labelledby="ai">
-    <h2 id="ai">Optional: a personal first line from AI</h2>
-    <p>Connecto works without AI. With a free key from Gemini, Groq or OpenRouter, or a model on your own computer (Ollama,
-      LM Studio), it can add one short opening line to each note. Only a few public facts are sent: title, company, headline,
-      description, industry and tags. Never a name, a link, a location, an e-mail address or a phone number. Every line is
-      checked before it is used, and a line that fails the check is simply left out.</p>
-    <div class="code"><pre><code>connecto ai providers   <span class="c"># the free and local options</span>
-connecto ai key         <span class="c"># save your key in a private file</span>
-connecto ai test        <span class="c"># check that it works</span></code></pre></div>
-  </section>
-
-  <section aria-labelledby="safety">
-    <h2 id="safety">Limits that never change</h2>
-    <p>These are ceilings in the code. No setting raises them.</p>
-    <div class="limits">
-      <div class="limit"><b>30</b><span>requests a day at most</span></div>
-      <div class="limit"><b>100</b><span>requests a week at most</span></div>
-      <div class="limit"><b>20</b><span>requests in one run at most</span></div>
+  <section id="daily" aria-labelledby="daily-title">
+    <div class="section-head"><span class="kicker">Every day</span><h2 id="daily-title">Everything else is one command away</h2></div>
+    <div class="spotlight glass reveal">
+      <label class="search" for="cmd-filter">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input id="cmd-filter" type="search" placeholder="Filter commands, for example pause" autocomplete="off" aria-label="Filter commands">
+      </label>
+      <ul class="cmds" id="cmds">
+        <li class="cmd"><code>connecto report</code><span>What has been sent, and what is coming.</span><kbd>daily</kbd></li>
+        <li class="cmd"><code>connecto preview</code><span>The next people and their notes. Sends nothing.</span><kbd>check</kbd></li>
+        <li class="cmd"><code>connecto pause --days 3</code><span>Stop sending for a while.</span><kbd>break</kbd></li>
+        <li class="cmd"><code>connecto resume</code><span>Lift the pause.</span><kbd>break</kbd></li>
+        <li class="cmd"><code>connecto add LINK</code><span>Add someone by hand, from a profile link, a text file or a CSV.</span><kbd>people</kbd></li>
+        <li class="cmd"><code>connecto skip LINK</code><span>Never contact this profile.</span><kbd>people</kbd></li>
+        <li class="cmd"><code>connecto export --out history.csv</code><span>Your invitation history as a spreadsheet.</span><kbd>data</kbd></li>
+        <li class="cmd"><code>connecto schedule uninstall</code><span>Stop the daily runs.</span><kbd>schedule</kbd></li>
+        <li class="cmd"><code>connecto doctor</code><span>Check that everything is in place.</span><kbd>check</kbd></li>
+      </ul>
+      <p class="empty" id="cmds-empty" hidden>No command matches. Try "pause", "schedule" or "export".</p>
     </div>
-    <p>Connecto stops at the first sign of trouble: a LinkedIn check page, a warning page or repeated errors. It uses no
-      tricks against LinkedIn's checks: no fingerprint changes, no CAPTCHA tools. Your settings, history and browser session
-      stay on your computer, in <code>~/.connecto</code>. There is no server, no user account and no telemetry.
-      <a data-doc="docs/safety.md" href="https://github.com/devanshxNishu/connecto/blob/main/docs/safety.md">More about safety</a>.</p>
   </section>
 
-  <section aria-labelledby="faq">
-    <h2 id="faq">Questions</h2>
-    <details><summary>Is it free?</summary><p>Yes. Connecto is open source under the MIT License. The AI helper is optional,
-      and it works with free providers or a model on your own computer.</p></details>
-    <details><summary>Does it work with a free LinkedIn account?</summary><p>Yes. Set <code>message.plan</code> to
-      <code>free</code> for 200-character notes or <code>premium</code> for 300. If LinkedIn offers no note box, Connecto
-      sends the request without a note, or stops if you set <code>if_note_unavailable: stop</code>.</p></details>
-    <details><summary>Can LinkedIn restrict my account?</summary><p>Yes. LinkedIn does not permit automation, and nobody can
-      promise that an account stays unrestricted. Keep the numbers low, watch the first runs, and stop for a few days if
-      LinkedIn shows a warning.</p></details>
-    <details><summary>Does it send messages?</summary><p>No. Only connection requests, with an optional short note.</p></details>
-    <details><summary>Something does not work</summary><p>Run <code>connecto doctor</code> first. Then read
-      <a data-doc="docs/troubleshooting.md" href="https://github.com/devanshxNishu/connecto/blob/main/docs/troubleshooting.md">troubleshooting</a>, or open an issue on
-      <a data-repo href="https://github.com/devanshxNishu/connecto">GitHub</a>.</p></details>
+  <div class="split">
+    <section id="ai" aria-labelledby="ai-title" class="panel glass reveal">
+      <span class="kicker">Optional</span>
+      <h2 id="ai-title">A personal first line from AI</h2>
+      <p>Connecto works without AI. With a free key from Gemini, Groq or OpenRouter, or a model on your own computer (Ollama,
+        LM Studio), it can add one short opening line to each note. Only a few public facts are sent: title, company, headline,
+        description, industry and tags. Never a name, a link, a location, an e-mail address or a phone number. Every line is
+        checked before it is used, and a line that fails the check is simply left out.</p>
+      <div class="chips"><span>Gemini</span><span>Groq</span><span>OpenRouter</span><span>Ollama</span><span>LM Studio</span></div>
+      <div class="term"><div class="term-bar"><span class="lights" aria-hidden="true"><i></i><i></i><i></i></span>Terminal</div>
+<pre><code><span class="ln">connecto ai providers   <span class="c"># the free and local options</span></span><span class="ln">connecto ai key         <span class="c"># save your key in a private file</span></span><span class="ln">connecto ai test        <span class="c"># check that it works</span></span></code></pre></div>
+    </section>
+
+    <section id="safety" aria-labelledby="safety-title" class="panel glass reveal">
+      <span class="kicker">Safety</span>
+      <h2 id="safety-title">Limits that never change</h2>
+      <p>These are ceilings in the code. No setting raises them. The ring shows the default share of each ceiling.</p>
+      <div class="gauges">
+        <div class="gauge"><div class="dial" style="--p:.4"><svg viewBox="0 0 80 80" aria-hidden="true"><circle class="track" cx="40" cy="40" r="35"/><circle class="fill" cx="40" cy="40" r="35"/></svg><b>30</b></div>
+          <small>a day at most<br>(8 to 12 by default)</small></div>
+        <div class="gauge"><div class="dial" style="--p:.6"><svg viewBox="0 0 80 80" aria-hidden="true"><circle class="track" cx="40" cy="40" r="35"/><circle class="fill" cx="40" cy="40" r="35"/></svg><b>100</b></div>
+          <small>a week at most<br>(60 by default)</small></div>
+        <div class="gauge"><div class="dial" style="--p:.35"><svg viewBox="0 0 80 80" aria-hidden="true"><circle class="track" cx="40" cy="40" r="35"/><circle class="fill" cx="40" cy="40" r="35"/></svg><b>20</b></div>
+          <small>in one run at most<br>(4 to 7 by default)</small></div>
+      </div>
+      <div class="promises">
+        <div class="promise"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></span>
+          <div><b>Stops at the first sign of trouble</b><span>A LinkedIn check page, a warning page or repeated errors end the run.</span></div></div>
+        <div class="promise"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/></svg></span>
+          <div><b>No tricks</b><span>No fingerprint changes and no CAPTCHA tools against LinkedIn's checks.</span></div></div>
+        <div class="promise"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></span>
+          <div><b>Stays on your computer</b><span>Settings, history and the browser session live in <code class="inline">~/.connecto</code>. No server, no user account, no telemetry.</span></div></div>
+      </div>
+      <a data-doc="docs/safety.md" href="https://github.com/devanshxNishu/connecto/blob/main/docs/safety.md">More about safety</a>
+    </section>
+  </div>
+
+  <section id="faq" aria-labelledby="faq-title">
+    <div class="section-head"><span class="kicker">Questions</span><h2 id="faq-title">Before you start</h2></div>
+    <div class="settings glass reveal">
+      <details><summary>Is it free?</summary><p>Yes. Connecto is open source under the MIT License. The AI helper is optional, and it works with
+        free providers or a model on your own computer.</p></details>
+      <details><summary>Does it work with a free LinkedIn account?</summary><p>Yes. Set <code class="inline">message.plan</code> to
+        <code class="inline">free</code> for 200-character notes or <code class="inline">premium</code> for 300. If LinkedIn offers no note box,
+        Connecto sends the request without a note, or stops if you set <code class="inline">if_note_unavailable: stop</code>.</p></details>
+      <details><summary>Can LinkedIn restrict my account?</summary><p>Yes. LinkedIn does not permit automation, and nobody can promise that an
+        account stays unrestricted. Keep the numbers low, watch the first runs, and stop for a few days if LinkedIn shows a warning.</p></details>
+      <details><summary>Does it send messages?</summary><p>No. Only connection requests, with an optional short note.</p></details>
+      <details><summary>Something does not work</summary><p>Run <code class="inline">connecto doctor</code> first. Then read
+        <a data-doc="docs/troubleshooting.md" href="https://github.com/devanshxNishu/connecto/blob/main/docs/troubleshooting.md">troubleshooting</a>,
+        or open an issue on <a data-repo href="https://github.com/devanshxNishu/connecto">GitHub</a>.</p></details>
+    </div>
   </section>
 </main>
 
-<footer>
-  <div class="wrap">
-    Connecto is free software under the MIT License. It is not affiliated with, endorsed by or connected to LinkedIn.
-    <br><a data-repo href="https://github.com/devanshxNishu/connecto">GitHub</a> ·
-    <a data-doc="docs/safety.md" href="https://github.com/devanshxNishu/connecto/blob/main/docs/safety.md">Safety</a> ·
-    <a data-doc="docs/troubleshooting.md" href="https://github.com/devanshxNishu/connecto/blob/main/docs/troubleshooting.md">Troubleshooting</a> ·
+<footer class="glass">
+  <span>Connecto is free software under the MIT License. It is not affiliated with, endorsed by or connected to LinkedIn.</span>
+  <nav aria-label="Links">
+    <a data-repo href="https://github.com/devanshxNishu/connecto">GitHub</a>
+    <a data-doc="docs/safety.md" href="https://github.com/devanshxNishu/connecto/blob/main/docs/safety.md">Safety</a>
+    <a data-doc="docs/troubleshooting.md" href="https://github.com/devanshxNishu/connecto/blob/main/docs/troubleshooting.md">Troubleshooting</a>
     <a data-doc="docs/sources.md" href="https://github.com/devanshxNishu/connecto/blob/main/docs/sources.md">Choosing who to meet</a>
-  </div>
+  </nav>
 </footer>
+
+<nav class="dock glass" aria-label="Sections">
+  <a href="#start" data-section="start"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M7 10l3 2-3 2M12 15h5"/></svg><span>Get started</span></a>
+  <a href="#daily" data-section="daily"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg><span>Every day</span></a>
+  <a href="#ai" data-section="ai"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3zM19 16l.8 2.2L22 19l-2.2.8L19 22l-.8-2.2L16 19l2.2-.8L19 16z"/></svg><span>AI line</span></a>
+  <a href="#safety" data-section="safety"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/></svg><span>Safety</span></a>
+  <a href="#faq" data-section="faq"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.5v.7M12 17v.5"/></svg><span>Questions</span></a>
+</nav>
 <p class="sr" aria-live="polite" id="live"></p>
 
 <script>
 (function () {
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
   // On GitHub Pages (OWNER.github.io/REPO/), point every GitHub link and the clone command at this repository, so a fork's
   // page links to the fork. Anywhere else the links above (devanshxNishu/connecto) stay as written.
   var host = location.hostname.match(/^([a-z0-9-]+)\.github\.io$/i);
   var repoName = location.pathname.split("/")[1] || "connecto";
   var owner = host ? host[1] : null;
-  var repo = owner ? "https://github.com/" + owner + "/" + repoName : null;
-  if (repo) {
+  if (owner && owner.toLowerCase() !== "devanshxnishu") {
+    var repo = "https://github.com/" + owner + "/" + repoName;
     document.querySelectorAll("[data-repo]").forEach(function (a) { a.href = repo; });
     document.querySelectorAll("[data-doc]").forEach(function (a) { a.href = repo + "/blob/main/" + a.getAttribute("data-doc"); });
     document.querySelectorAll(".gh-user").forEach(function (s) { s.textContent = owner; });
@@ -309,18 +601,16 @@ connecto ai test        <span class="c"># check that it works</span></code></pre
   tabs.forEach(function (t) { t.addEventListener("click", function () { show(t); }); });
   if (/Win/i.test(navigator.platform || navigator.userAgent)) { show(document.getElementById("tab-win")); }
 
-  // A copy button on every code block.
+  // A copy button in every terminal: the commands only, without the "$" prompts and the comments.
   var live = document.getElementById("live");
-  document.querySelectorAll(".code").forEach(function (box) {
+  document.querySelectorAll(".term").forEach(function (box) {
     var button = document.createElement("button");
-    button.className = "copy";
-    button.type = "button";
-    button.textContent = "Copy";
+    button.className = "copy"; button.type = "button"; button.textContent = "Copy";
     button.addEventListener("click", function () {
-      var lines = box.querySelector("code").textContent.split("\n").map(function (line) {
-        return line.replace(/\s+#.*$/, "");          // copy the commands without the comments
+      var lines = Array.prototype.map.call(box.querySelectorAll(".ln"), function (ln) {
+        return ln.textContent.replace(/\s+#.*$/, "").trim();
       });
-      var text = lines.join("\n").trim();
+      var text = lines.join("\n");
       function done(ok) {
         button.textContent = ok ? "Copied" : "Select and copy";
         live.textContent = ok ? "Copied to the clipboard" : "";
@@ -330,8 +620,76 @@ connecto ai test        <span class="c"># check that it works</span></code></pre
         navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); });
       } else { done(false); }
     });
-    box.appendChild(button);
+    box.querySelector(".term-bar").appendChild(button);
   });
+
+  // Filter the everyday commands, like a launcher.
+  var filter = document.getElementById("cmd-filter");
+  var rows = Array.prototype.slice.call(document.querySelectorAll("#cmds .cmd"));
+  var empty = document.getElementById("cmds-empty");
+  filter.addEventListener("input", function () {
+    var q = filter.value.trim().toLowerCase(), shown = 0;
+    rows.forEach(function (r) { var hit = !q || r.textContent.toLowerCase().indexOf(q) >= 0; r.hidden = !hit; if (hit) shown++; });
+    empty.hidden = shown > 0;
+  });
+
+  // A highlight on the glass that follows the pointer.
+  if (window.matchMedia && window.matchMedia("(pointer: fine)").matches) {
+    document.addEventListener("pointermove", function (e) {
+      var g = e.target.closest && e.target.closest(".glass");
+      if (!g) return;
+      var r = g.getBoundingClientRect();
+      g.style.setProperty("--mx", (e.clientX - r.left) + "px");
+      g.style.setProperty("--my", (e.clientY - r.top) + "px");
+    }, { passive: true });
+  }
+
+  // The dock marks the section you are reading.
+  var links = Array.prototype.slice.call(document.querySelectorAll(".dock a"));
+  if ("IntersectionObserver" in window) {
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (en) {
+        if (en.isIntersecting) {
+          links.forEach(function (a) { a.classList.toggle("active", a.getAttribute("data-section") === en.target.id); });
+        }
+      });
+    }, { rootMargin: "-45% 0px -50% 0px" });
+    links.forEach(function (a) { var s = document.getElementById(a.getAttribute("data-section")); if (s) io.observe(s); });
+  }
+
+  // The example queue: each founder moves from queued to finding to writing to sent, and the note follows the person.
+  if (reduce) return;
+  var order = ["queued", "finding", "writing", "sent"], label = { queued: "Queued", finding: "Finding", writing: "Writing", sent: "Sent" };
+  var queue = Array.prototype.slice.call(document.querySelectorAll(".queue .row"));
+  var start = queue.map(function (r) { return r.querySelector(".pill").getAttribute("data-state"); });
+  var sent = document.getElementById("sent-count"), noteTo = document.getElementById("note-to"),
+      noteLen = document.getElementById("note-len"), noteText = document.getElementById("note-text");
+  function setState(row, state) {
+    var pill = row.querySelector(".pill");
+    pill.setAttribute("data-state", state); pill.textContent = label[state];
+    row.classList.toggle("is-writing", state === "writing");
+    if (state === "writing") {
+      var text = "Hi " + row.dataset.first + ", congrats on " + row.dataset.company + " getting into YC (" + row.dataset.batch +
+                 ")! I'm Asha, a designer in Pune building tools for small shops. Would love to connect and learn from your journey.";
+      noteTo.textContent = "Note to " + row.dataset.first; noteText.textContent = text; noteLen.textContent = text.length + " / 300";
+    }
+  }
+  var count = 4;
+  setInterval(function () {
+    var states = queue.map(function (r) { return r.querySelector(".pill").getAttribute("data-state"); });
+    if (states.every(function (s) { return s === "sent"; })) {
+      queue.forEach(function (r, i) { setState(r, start[i]); });
+      count = 4; sent.textContent = count;
+      return;
+    }
+    for (var i = queue.length - 1; i >= 0; i--) {                       // everyone moves one step, the last row first
+      if (states[i] !== "sent") {
+        var next = order[order.indexOf(states[i]) + 1];
+        setState(queue[i], next);
+        if (next === "sent") { count++; sent.textContent = count; }
+      }
+    }
+  }, 2200);
 })();
 </script>
 </body>
