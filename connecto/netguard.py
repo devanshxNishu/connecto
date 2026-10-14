@@ -178,9 +178,14 @@ def _open(addresses, port: int, timeout: float, deadline: float) -> socket.socke
         if left <= 0:
             break
         try:
-            return _connect(ip, port, min(timeout, left))
+            sock = _connect(ip, port, min(timeout, left))
         except OSError as exc:
             error = exc
+            continue
+        # From here on the socket's timeout is the read timeout only. The time limit for the whole download is the
+        # watchdog's: a socket timeout cut to the time left would end at the same moment and give the wrong explanation.
+        sock.settimeout(timeout)
+        return sock
     raise error or TimeoutError("ran out of time before a connection could be made")
 
 
@@ -209,6 +214,7 @@ class _Watchdog:
 
     def __init__(self, seconds: float):
         self.seconds = seconds
+        self.ends = time.monotonic() + seconds
         self.expired = False
         self._sock = None
         self._lock = threading.Lock()
@@ -232,6 +238,10 @@ class _Watchdog:
 
     def stop(self) -> None:
         self._timer.cancel()
+
+    def time_is_up(self) -> bool:
+        """The timer has fired, or is due to: a connection attempt cut to the time left can fail a moment before it."""
+        return self.expired or time.monotonic() >= self.ends
 
 
 def _hang_up(sock) -> None:
@@ -290,7 +300,7 @@ def _proxy_configured() -> bool:
 
 
 def _broken(exc: BaseException, dog: _Watchdog, url: str, what: str, reading: bool) -> FetchError:
-    if dog.expired:
+    if dog.time_is_up():
         return FetchError(f"{what} took more than {dog.seconds:g} seconds to download")
     name = type(exc).__name__
     if reading:

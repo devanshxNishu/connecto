@@ -778,6 +778,24 @@ def test_the_watchdog_hangs_up_on_a_socket_it_learns_about_too_late():
         dog.stop()
 
 
+def test_once_connected_a_socket_waits_the_read_timeout_and_leaves_the_time_limit_to_the_watchdog():
+    with socket.create_server(("127.0.0.1", 0)) as listener:
+        sock = netguard._open(["127.0.0.1"], listener.getsockname()[1], timeout=5, deadline=time.monotonic() + 0.3)
+        try:
+            assert sock.gettimeout() == 5               # (cut to the 0.3 s left, it would end together with the watchdog)
+        finally:
+            sock.close()
+
+
+def test_a_failure_when_the_time_is_up_is_explained_as_the_time_limit_even_before_the_timer_fires():
+    dog = netguard._Watchdog(0.2)
+    dog.stop()                                          # (the timer never fires: only the clock says the time is up)
+    time.sleep(0.3)
+    assert not dog.expired
+    error = netguard._broken(TimeoutError(), dog, "https://a.test/", "page", reading=False)
+    assert str(error) == "page took more than 0.2 seconds to download"
+
+
 def test_a_finished_download_leaves_no_timer_behind():
     with Pages() as srv:
         srv.html("/ok", "<html>fine</html>")

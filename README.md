@@ -8,7 +8,7 @@ and sends a few connection requests a day from your own browser.</p>
   <a href="https://github.com/devanshxNishu/connecto/actions/workflows/tests.yml"><img alt="Tests" src="https://github.com/devanshxNishu/connecto/actions/workflows/tests.yml/badge.svg"></a>
   <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-137a60"></a>
   <img alt="Python 3.10 or newer" src="https://img.shields.io/badge/python-3.10%2B-137a60">
-  <img alt="More than 2,500 offline and 138 browser tests" src="https://img.shields.io/badge/tests-2%2C500%2B%20offline%20%C2%B7%20138%20browser-137a60">
+  <img alt="More than 2,500 offline and 139 browser tests" src="https://img.shields.io/badge/tests-2%2C500%2B%20offline%20%C2%B7%20139%20browser-137a60">
   <a href="https://devanshxnishu.github.io/connecto/"><img alt="Website" src="https://img.shields.io/badge/website-getting%20started-137a60"></a>
 </p>
 
@@ -268,15 +268,16 @@ Every change goes through a test suite that never touches the real internet or a
 
 | Check | What it covers | Result |
 |---|---|---|
-| Offline tests | Settings, limits, the note engine, every source, the AI client and its filter, the setup page's security, the schedulers, hostile input (huge, broken or booby-trapped files and pages) | 2,546 passing on Python 3.10, 3.12 and 3.13 |
-| Browser tests | A real Chromium against stand-in LinkedIn pages: open a profile, *Connect*, add the note, *Send*, and stop at a check or a warning; the setup page; the browser-based sources | 138 passing |
+| Offline tests | Settings, limits, the note engine, every source, the AI client and its filter, the setup page's security, the schedulers, hostile input (huge, broken or booby-trapped files and pages) | 2,548 passing on Python 3.10, 3.12 and 3.13 |
+| Browser tests | A real Chromium against stand-in LinkedIn pages: open a profile, *Connect*, add the note, *Send*, and stop at a check or a warning; the setup page; the browser-based sources | 139 passing |
 | Safety rules broken on purpose | A check is removed or flipped and a test must fail (mutation testing): the send engine and its stop rules, privacy, the network guard, file handling, settings migration, the run lock, the store | 91 of 97 caught |
 | The real YC directory | The YC source read live, without touching LinkedIn: 6,297 companies listed; notes written for 75 real founders from two batches, all within the 300 characters of a Premium note | passed |
 | Docs and website | Every `connecto` command shown in the docs and on the website exists, with the options it uses | checked by a test |
 | Clean install | `pip install .` from a fresh copy of the repository, then `connecto doctor` | works |
 
-On every push, GitHub Actions runs the offline tests on Python 3.10, 3.12 and 3.13 on Linux, again on macOS and Windows,
-the browser tests on Linux, and builds and installs the package in a clean environment.
+On every push, GitHub Actions runs the offline tests on Python 3.10, 3.12 and 3.13 on Linux, the browser tests on Linux,
+and builds and installs the package in a clean environment. The offline tests also run on macOS and Windows, for
+information: a failure there is reported but does not fail the run.
 
 **Not tested, on purpose or for now:** sending on the real LinkedIn (no test ever touches it), and the macOS and Windows
 schedulers in everyday use (they have unit tests). Watch your first runs, and report what you see.
