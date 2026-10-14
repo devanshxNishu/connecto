@@ -1,15 +1,39 @@
-# Connecto
+<p align="center"><img src="docs/assets/logo.svg" width="72" height="72" alt=""></p>
+<h1 align="center">Connecto</h1>
+<p align="center"><b>Grow your LinkedIn network, a few careful requests a day.</b><br>
+A free, local-first assistant that finds the people you want to meet, writes a personal note for each of them<br>
+and sends a few connection requests a day from your own browser.</p>
 
-**A careful, local-first networking assistant for LinkedIn.**
+<p align="center">
+  <a href="https://github.com/devanshxNishu/connecto/actions/workflows/tests.yml"><img alt="Tests" src="https://github.com/devanshxNishu/connecto/actions/workflows/tests.yml/badge.svg"></a>
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-137a60"></a>
+  <img alt="Python 3.10 or newer" src="https://img.shields.io/badge/python-3.10%2B-137a60">
+  <img alt="2,545 offline and 138 browser tests" src="https://img.shields.io/badge/tests-2%2C545%20offline%20%C2%B7%20138%20browser-137a60">
+  <a href="https://devanshxnishu.github.io/connecto/"><img alt="Website" src="https://img.shields.io/badge/website-getting%20started-137a60"></a>
+</p>
+
+<p align="center">
+  <a href="https://devanshxnishu.github.io/connecto/"><b>Website</b></a> &middot;
+  <a href="#quick-start">Quick start</a> &middot;
+  <a href="#testing-and-quality">Testing</a> &middot;
+  <a href="docs/safety.md">Safety</a> &middot;
+  <a href="docs/sources.md">Choosing who to meet</a> &middot;
+  <a href="CONTRIBUTING.md">Contributing</a>
+</p>
+
+<p align="center">
+  <a href="https://devanshxnishu.github.io/connecto/">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="docs/assets/site-dark.jpg">
+      <img alt="The Connecto website: a frosted-glass desktop with an example of today's queue and a note being written" src="docs/assets/site-light.jpg" width="880">
+    </picture>
+  </a>
+</p>
 
 Say who you would like to meet - founders from a certain batch, designers in your city, the speakers at a conference,
 anyone you can describe or list - and Connecto sends a few personal connection requests a day from **your own browser,
 on your own computer**. It works with no AI at all. If you want a more personal touch, a free API key (or a model
 running on your laptop) can write one opening line per person.
-
-**Website:** a one-page getting-started guide (install, sign in, first run, daily schedule) lives in
-[`site/`](site/index.html). GitHub Pages publishes it at `https://devanshxnishu.github.io/connecto/` - see
-[Development](#development) for the one-time setup.
 
 > **Please read this first.** LinkedIn's User Agreement does not allow automated activity. Accounts that automate can be
 > warned, limited or restricted, and no tool can promise otherwise. Connecto keeps the volume low (the ceilings are
@@ -236,6 +260,26 @@ More in [docs/troubleshooting.md](docs/troubleshooting.md).
 files). It helps you choose sources and filters, write honest notes and diagnose problems, and it is written never to send
 anything for you, touch your LinkedIn credentials or take an API key in a chat. Coding agents working *on* this repository
 should read [CLAUDE.md](CLAUDE.md).
+
+## Testing and quality
+
+Every change goes through a test suite that never touches the real internet or a real LinkedIn: a guard in
+`tests/conftest.py` makes any test that tries fail loudly. The state in October 2026:
+
+| Check | What it covers | Result |
+|---|---|---|
+| Offline tests | Settings, limits, the note engine, every source, the AI client and its filter, the setup page's security, the schedulers, hostile input (huge, broken or booby-trapped files and pages) | 2,545 passing |
+| Browser tests | A real Chromium against stand-in LinkedIn pages: open a profile, *Connect*, add the note, *Send*, and stop at a check or a warning; the setup page; the browser-based sources | 138 passing |
+| Safety rules broken on purpose | A check is removed or flipped and a test must fail (mutation testing): the send engine and its stop rules, privacy, the network guard, file handling, settings migration, the run lock, the store | 91 of 97 caught |
+| The real YC directory | The YC source read live, without touching LinkedIn: 6,297 companies listed; notes written for 75 real founders from two batches, all within the 300 characters of a Premium note | passed |
+| Docs and website | Every `connecto` command shown in the docs and on the website exists, with the options it uses | checked by a test |
+| Clean install | `pip install .` from a fresh copy of the repository, then `connecto doctor` | works |
+
+On every push, GitHub Actions runs the offline tests on Python 3.10, 3.12 and 3.13 on Linux, again on macOS and Windows,
+the browser tests on Linux, and builds and installs the package in a clean environment.
+
+**Not tested, on purpose or for now:** sending on the real LinkedIn (no test ever touches it), and the macOS and Windows
+schedulers in everyday use (they have unit tests). Watch your first runs, and report what you see.
 
 ## Development
 
