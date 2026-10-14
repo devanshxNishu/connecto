@@ -189,6 +189,10 @@ def _tls_context() -> ssl.SSLContext:
     """The usual checks (certificate chain and host name); the system's certificates, plus the ones ``certifi`` brings
     (a Python installed from python.org on a Mac has none of its own)."""
     context = ssl.create_default_context()
+    # Never older than TLS 1.2, whatever this Python's or this system's defaults say (some builds report "minimum
+    # supported" and leave the floor to the system's OpenSSL settings).
+    if context.minimum_version != ssl.TLSVersion.MAXIMUM_SUPPORTED and context.minimum_version < ssl.TLSVersion.TLSv1_2:
+        context.minimum_version = ssl.TLSVersion.TLSv1_2
     try:
         import certifi
 
