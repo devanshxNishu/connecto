@@ -1,0 +1,15 @@
+# A spreadsheet you already have: LinkedIn's own Connections export, a Sales Navigator or Apollo export, your CRM,
+# or a list you made yourself. See leads.example.csv for the shape. E-mail addresses and phone numbers in the file
+# are never stored.
+me:
+  first_name: Asha
+  about: "a product designer in Pune"
+
+sources:
+  - type: csv
+    path: ~/leads.csv                      # "~" is your home folder; a bare file name is looked for in <connecto folder>/data/imports
+    # columns: {linkedin_url: "Profile"}   # only if Connecto cannot tell which column holds the profile addresses
+
+targets:
+  titles: [founder, "co-founder", ceo, "head of"]
+  locations: [India]

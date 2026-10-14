@@ -1,0 +1,25 @@
+name: Feature request
+description: An idea for something Connecto could do
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: Describe the situation, not only the feature. Who do you want to meet, and what gets in the way?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like Connecto to do?
+  - type: checkboxes
+    id: promises
+    attributes:
+      label: This request keeps the project's promises
+      description: See CONTRIBUTING.md. Requests that break one of these will be closed.
+      options:
+        - label: It does not ask to raise the safety limits, hide that a program is driving the browser, or get around a LinkedIn check.
+          required: true
+        - label: It does not need a LinkedIn password, e-mail addresses, phone numbers, messages or a server of ours.
+          required: true

@@ -1,0 +1,15 @@
+# A LinkedIn people search, read slowly through your own signed-in browser (a few result pages per run, with a hard
+# daily page budget). Plain keywords work, or paste the address of a search you set up on linkedin.com yourself.
+me:
+  first_name: Asha
+  about: "a product designer in Pune"
+
+sources:
+  - type: linkedin_search
+    queries:
+      - "head of design fintech india"
+    max_pages: 3                           # result pages per query per fetch (at most 10, and 20 a day in total)
+    skip_first_degree: true                # people you are already connected with are skipped
+
+targets:
+  exclude_keywords: [agency, freelance]

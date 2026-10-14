@@ -1,0 +1,55 @@
+name: Bug report
+description: Something does not work the way the documentation says
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Before you post:** remove names, profile links and anything that looks like an API key from everything you paste.
+        Never paste `config.yaml` without reading it, and never `.env`.
+
+        If this is a *safety* problem - a limit that was exceeded, a run that did not stop, a key that was printed, a way into
+        the setup page from another website - **please do not post it here.** Use the "security problem" link on the previous page.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: The command or the buttons you used
+      render: shell
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The output of `connecto --version`
+  - type: input
+    id: system
+    attributes:
+      label: Operating system and Python version
+      placeholder: macOS 15, Python 3.12
+    validations:
+      required: true
+  - type: textarea
+    id: doctor
+    attributes:
+      label: Output of `connecto doctor`
+      render: text
+  - type: textarea
+    id: log
+    attributes:
+      label: Relevant lines of logs/run.log
+      description: With names, profile links and anything that looks like a key removed.
+      render: text
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Before submitting
+      options:
+        - label: I removed names, profile links and keys from everything above.
+          required: true
+        - label: This is not a security problem (those are reported privately).
+          required: true

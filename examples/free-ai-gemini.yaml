@@ -1,0 +1,26 @@
+# Add one personal opening line per person, written by a free AI model (Google Gemini's free tier here; Groq and
+# OpenRouter work the same way). Everything still works without it.
+#
+# The API key does NOT go in this file. Save it with `connecto ai key` (or the setup page's Message tab) and it is kept
+# in the .env file of your Connecto folder. Then check it: `connecto ai test`.
+#
+# The model only ever sees a few public facts (title, company, headline, description, industry, tags) - never a name,
+# a profile link, a location, an e-mail address or a phone number. Free tiers change often; check the provider's page.
+me:
+  first_name: Asha
+  about: "a product designer in Pune"
+
+sources:
+  - type: yc
+    batches: [S26]
+
+ai:
+  enabled: true
+  provider: gemini                         # gemini | groq | openrouter | ollama | custom
+  max_calls_per_day: 60                    # keeps you inside a free tier
+
+message:
+  templates:
+    # {hook} is the AI's line. A person whose line was rejected or unavailable simply gets a template without one.
+    - "Hi {first_name}, {hook} I'm {me_first_name}, {me_about} - would love to connect."
+    - "Hi {first_name} - {me_first_name} here, {me_about}. Your work[[ at {company}]] caught my eye. Would be great to connect."

@@ -1,0 +1,16 @@
+# People listed on a web page whose names link to their LinkedIn profiles: speakers, a team page, alumni, a committee.
+me:
+  first_name: Asha
+  about: "a product designer in Pune"
+  project: "a design community for early-career designers"
+
+sources:
+  - type: webpage
+    urls:
+      - "https://example.com/conference/speakers"
+    render: false                          # true loads the page in a browser first, for pages that build their list with JavaScript
+
+message:
+  templates:
+    - "Hi {first_name}, I saw you're speaking at the conference - I'm {me_first_name}, {me_about}. Would love to connect[[ and hear more about your work at {company}]]."
+    - "Hi {first_name}, {me_first_name} here ({me_about}). Looking forward to your session - would be great to connect."

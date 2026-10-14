@@ -1,0 +1,66 @@
+# A sanitised yc-founder-connect (v1) config.yaml: the same layout as v1's config.example.yaml, with generic values.
+# tests/test_migrate.py converts this file; nothing in it belongs to a real person.
+
+# ---------------------------------------------------------------- about you (used in the note)
+me:
+  first_name: Alex
+  project: Acme
+  project_blurb: a tool that does X for Y
+  applied_batch: S26
+  one_line_about: a second-time founder
+
+# ---------------------------------------------------------------- who to connect with
+targets:
+  batches: ["Summer 2026", "Fall 2026"]
+  industries: ["Fintech", "Healthcare"]
+  tags: ["Artificial Intelligence"]
+  keywords: ["payments"]
+  exclude_keywords: ["crypto"]
+  regions: ["India"]
+  company_status: ["Active"]
+  only_top_companies: false
+  titles_regex: "(?i)\\bCEO\\b"
+  exclude_titles_regex: "(?i)advisor|investor"
+  only_active_founders: true
+  max_team_size: 20
+
+# ---------------------------------------------------------------- YC scraping
+yc:
+  companies_json: https://yc-oss.github.io/api/companies/all.json
+  company_page: https://www.ycombinator.com/companies/{slug}
+  cache_hours: 24
+  delay_seconds: [1.0, 2.5]
+  workers: 2
+  engine: requests
+  user_agent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36"
+  output_csv: data/founders.csv
+  progress_json: data/scrape_progress.json
+
+# ---------------------------------------------------------------- LinkedIn sending
+linkedin:
+  order: newest_first
+  daily_cap: [10, 15]
+  per_run_cap: [5, 9]
+  weekly_cap: 80
+  delay_between_profiles_seconds: [60, 180]
+  active_hours: ["09:30", "21:30"]
+  stop_after_consecutive_errors: 3
+  random_start_delay_minutes: 40
+  notify: true
+  send_note: true
+  max_note_chars: 300
+  note_templates:
+    - |-
+      Hi {first_name}, congrats on {company} getting into YC ({batch_code})! I'm {me_first_name}, {me_about}, building {project} - {project_blurb}. Would love to connect and learn from your journey.
+    - |-
+      Hi {first_name} - saw {company} in the YC {batch_code} batch, really impressive. I'm {me_first_name}, building {project} ({project_blurb}). Would be great to connect with founders who've been through it.
+    - |-
+      Hi {first_name}, {company} caught my eye in YC {batch_code}. I'm {me_first_name}, {me_about}, working on {project} - {project_blurb}. Would love to connect and follow how {company} grows.
+    # a custom one, written by the (fictional) user: uses all three v1-only placeholders
+    - |-
+      Hi {first_name}, {company} caught my eye in YC {batch_code}. I'm {me_first_name}, building {project} - {project_blurb} - and I applied to YC for {applied_batch} but didn't get in. Would love to connect and learn from you.
+  browser_channel: chrome
+  profile_dir: browser_profile
+  headless: false
+  state_db: state/linkedin.sqlite
+  founders_csv: data/founders.csv

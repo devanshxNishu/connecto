@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: A security problem
+    url: https://github.com/YOUR-USERNAME/connecto/security/advisories/new
+    about: A limit that was exceeded, a run that did not stop, a key that was printed, a way into the setup page from another website. Please report these privately, not as a public issue.

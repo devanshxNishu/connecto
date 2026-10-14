@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "connecto"
+version = "0.1.0"
+description = "A careful, local-first networking assistant: pick who you want to meet, and Connecto sends a few personal LinkedIn connection requests a day from your own browser. Works with no AI, or with a free API key / local model."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [{ name = "Devansh Dwivedi" }]
+keywords = ["linkedin", "networking", "automation", "outreach", "playwright", "open-source"]
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Operating System :: OS Independent",
+  "Environment :: Console",
+  "Topic :: Communications",
+]
+dependencies = [
+  "requests>=2.31",
+  "beautifulsoup4>=4.12",
+  "lxml>=5.0",
+  "PyYAML>=6.0",
+  "playwright>=1.48",
+  "certifi>=2023.7.22",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+connecto = "connecto.cli:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["connecto*"]
+
+[tool.setuptools.package-data]
+"connecto.ui" = ["static/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = ["browser: launches headless Chromium against the mock LinkedIn (slow)"]
+addopts = "-q"

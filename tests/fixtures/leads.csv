@@ -1,0 +1,9 @@
+Notes:
+"When exporting your connection data, you may notice that some of the email addresses are missing. You will only see email addresses for connections who have allowed their connections to see or download their email address using this setting. https://www.linkedin.com/help/linkedin/answer/261"
+
+First Name,Last Name,URL,Email Address,Company,Position,Connected On
+Jane,Doe,https://www.linkedin.com/in/jane-doe-123,jane.doe@acme.example,Acme Inc,CTO,12 Jan 2024
+Raj,Singh,https://www.linkedin.com/in/raj-singh/,,"Foo, Bar & Co",Founder,03 Feb 2023
+Zoë,Müller,https://de.linkedin.com/in/zoe-mueller?trk=export,zoe@x.example,Lumen Labs,Head of Design,21 Nov 2022
+Ghost,Row,,,Nowhere Ltd,Ghost,01 Jan 2020
+Chain,Gang,https://www.linkedin.com/company/some-company/,,Some Company,Recruiter,02 Feb 2021

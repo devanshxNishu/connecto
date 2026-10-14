@@ -1,0 +1,23 @@
+# The same idea with a model that runs on your own computer through Ollama: no account, no key, nothing leaves your
+# machine. Install Ollama (https://ollama.com/download), then:
+#   ollama pull llama3.2        (once; any small instruct model will do)
+#   ollama serve                (if it is not already running)
+#   connecto ai test
+me:
+  first_name: Asha
+  about: "a product designer in Pune"
+
+sources:
+  - type: csv
+    path: ~/leads.csv
+
+ai:
+  enabled: true
+  provider: ollama
+  model: llama3.2
+  max_calls_per_day: 200                   # local models have no daily quota; this only bounds the work
+
+message:
+  templates:
+    - "Hi {first_name}, {hook} I'm {me_first_name}, {me_about} - would love to connect."
+    - "Hi {first_name}, I'm {me_first_name}, {me_about}. Your work[[ at {company}]] caught my eye - would love to connect."

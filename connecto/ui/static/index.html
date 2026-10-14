@@ -1,0 +1,922 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="connecto-secret" content="__SECRET__">
+<meta name="color-scheme" content="light dark">
+<title>Connecto</title>
+<style nonce="__NONCE__">
+:root{
+  --bg:#f5f6f8; --card:#ffffff; --ink:#18202b; --muted:#5a6573; --line:#dde2e9; --soft:#eef1f5;
+  --accent:#2748d4; --accent-ink:#ffffff; --accent-soft:#e8edfd;
+  --ok:#15693f; --ok-bg:#e4f5eb; --warn:#8a4b00; --warn-bg:#fff2dc; --bad:#a3231a; --bad-bg:#fcebe9; --info:#2c4f86; --info-bg:#e7effb;
+  --ok-solid:#15693f; --warn-solid:#8a4b00; --bad-solid:#a3231a;      /* backgrounds that carry white text (toasts) */
+  --radius:12px; --shadow:0 1px 2px rgba(20,30,50,.06),0 4px 16px rgba(20,30,50,.05);
+  --font:system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){
+  :root{
+    --bg:#0f1319; --card:#171d26; --ink:#e8ecf2; --muted:#9aa6b6; --line:#2a3340; --soft:#1f2732;
+    --accent:#8aa6ff; --accent-ink:#0b1226; --accent-soft:#1f2a4d;
+    --ok:#6ad39a; --ok-bg:#12281d; --warn:#f0b35a; --warn-bg:#2c2110; --bad:#ff8f86; --bad-bg:#2e1614; --info:#8db4f0; --info-bg:#14243d;
+    --ok-solid:#1f7a4d; --warn-solid:#9a5a0a; --bad-solid:#b3342a;
+    --shadow:0 1px 2px rgba(0,0,0,.4);
+  }
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--font);overflow-wrap:anywhere}
+h1,h2,h3{line-height:1.25;margin:0}
+h2{font-size:17px}
+h3{font-size:15px}
+p{margin:0}
+a{color:var(--accent)}
+code{font-family:var(--mono);font-size:.92em;background:var(--soft);padding:1px 5px;border-radius:5px}
+.sr{position:absolute;left:-9999px}
+
+header.top{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line)}
+.top-in{max-width:980px;margin:0 auto;padding:10px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.brand{font-weight:700;font-size:18px;letter-spacing:.2px}
+.brand small{font-weight:400;color:var(--muted);margin-left:6px;font-size:12px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto;align-items:center}
+nav.tabs{max-width:980px;margin:0 auto;padding:0 8px;display:flex;gap:2px;overflow-x:auto}
+nav.tabs button{background:none;border:0;border-bottom:3px solid transparent;padding:10px 12px;font:inherit;color:var(--muted);cursor:pointer;white-space:nowrap}
+nav.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+nav.tabs button:hover{color:var(--ink)}
+main{max-width:980px;margin:0 auto;padding:18px 16px 110px;display:grid;grid-template-columns:minmax(0,1fr);gap:16px}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);display:grid;grid-template-columns:minmax(0,1fr);gap:14px}
+.card>header{display:grid;gap:4px}
+.card .desc,.hint,.muted{color:var(--muted);font-size:13.5px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:720px){.grid2,.grid3{grid-template-columns:1fr}}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.row.end{justify-content:flex-end}
+.spacer{flex:1}
+
+.field{display:grid;gap:5px;align-content:start}
+.field .lbl{font-weight:600;font-size:13.5px}
+input[type=text],input[type=number],input[type=password],input[type=time],select,textarea{
+  width:100%;font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+textarea{resize:vertical;min-height:64px;font-family:inherit}
+input:focus,select:focus,textarea:focus,button:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.check{display:flex;gap:8px;align-items:flex-start;cursor:pointer}
+.check input{margin-top:4px}
+.pair{display:flex;gap:8px;align-items:center}
+.pair span{color:var(--muted)}
+
+.btn{font:inherit;font-weight:600;border-radius:9px;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 14px;cursor:pointer}
+.btn:hover:not(:disabled){background:var(--soft)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:hover:not(:disabled){filter:brightness(1.08);background:var(--accent)}
+.btn.danger{color:var(--bad);border-color:var(--bad)}
+.btn.small{padding:4px 10px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+.chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:2px 10px;font-size:12.5px;font-weight:600;background:var(--soft);color:var(--muted);white-space:nowrap}
+.chip.ok{background:var(--ok-bg);color:var(--ok)} .chip.warn{background:var(--warn-bg);color:var(--warn)}
+.chip.bad{background:var(--bad-bg);color:var(--bad)} .chip.info{background:var(--info-bg);color:var(--info)}
+.banner{display:flex;gap:12px;align-items:center;border-radius:var(--radius);padding:12px 14px;border:1px solid transparent}
+.banner.warn{background:var(--warn-bg);color:var(--warn)} .banner.info{background:var(--info-bg);color:var(--info)}
+.banner.bad{background:var(--bad-bg);color:var(--bad)} .banner.ok{background:var(--ok-bg);color:var(--ok)}
+.banner .spacer{flex:1}
+
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:720px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.stat{background:var(--soft);border-radius:10px;padding:12px}
+.stat b{display:block;font-size:24px;line-height:1.1}
+.stat span{color:var(--muted);font-size:13px}
+
+ol.steps{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+ol.steps li{display:flex;gap:12px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+ol.steps li.next{border-color:var(--accent);background:var(--accent-soft)}
+ol.steps .dot{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;background:var(--soft);color:var(--muted)}
+ol.steps li.done .dot{background:var(--ok-bg);color:var(--ok)}
+ol.steps li.next .dot{background:var(--accent);color:var(--accent-ink)}
+ol.steps .what{flex:1;min-width:0} ol.steps .what b{display:block} ol.steps .what span{color:var(--muted);font-size:13px}
+
+pre.log{margin:0;background:#0d1117;color:#d7dde6;border-radius:10px;padding:12px;max-height:340px;overflow:auto;font:12.5px/1.45 var(--mono);white-space:pre-wrap;word-break:break-word}
+.source{border:1px solid var(--line);border-radius:10px;padding:14px;display:grid;gap:12px}
+.source.off{opacity:.6}
+.source>header{display:flex;gap:10px;align-items:center}
+.source>header h3{flex:1}
+.tpl{border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;gap:8px}
+.note{background:var(--soft);border-radius:8px;padding:8px 10px;font-size:14px;white-space:pre-wrap;word-break:break-word}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12.5px;color:var(--muted);font-weight:600}
+td.wrap{word-break:break-word}
+.scroll{overflow-x:auto}
+.scroll table{min-width:540px}
+.check-list{display:grid;gap:8px}
+.check-item{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+.check-item .detail{color:var(--muted);font-size:13px;white-space:pre-wrap;word-break:break-word}
+.check-item .fix{font-size:13px}
+details>summary{cursor:pointer;color:var(--accent);font-weight:600}
+
+#savebar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);padding:10px 16px;display:none;box-shadow:0 -4px 20px rgba(0,0,0,.12);z-index:6}
+#savebar.show{display:block}
+#savebar .in{max-width:980px;margin:0 auto;display:flex;gap:10px;align-items:center}
+#toasts{position:fixed;right:14px;bottom:70px;display:grid;gap:8px;z-index:9;max-width:min(420px,calc(100vw - 28px))}
+.toast{background:var(--ink);color:var(--bg);padding:10px 14px;border-radius:10px;box-shadow:var(--shadow);font-size:14px}
+.toast.ok{background:var(--ok-solid);color:#fff} .toast.bad{background:var(--bad-solid);color:#fff} .toast.warn{background:var(--warn-solid);color:#fff}
+dialog{border:1px solid var(--line);border-radius:14px;background:var(--card);color:var(--ink);padding:20px;max-width:min(520px,calc(100vw - 28px));box-shadow:0 20px 60px rgba(0,0,0,.35)}
+dialog::backdrop{background:rgba(10,14,20,.55)}
+dialog form{display:grid;gap:14px}
+.spin{display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.spin{animation:none}}
+.riskbox{white-space:pre-wrap;background:var(--soft);border-radius:10px;padding:12px;font-size:14px}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <div class="brand">Connecto<small>v__VERSION__</small></div>
+    <div class="chips" id="chips"></div>
+    <button class="btn small" id="quit" type="button" title="Stop the setup page (daily runs keep working)">Quit</button>
+  </div>
+  <nav class="tabs" id="tabs" role="tablist" aria-label="Sections"></nav>
+</header>
+<main id="view" tabindex="-1"></main>
+<div id="savebar" role="region" aria-label="Unsaved changes"><div class="in">
+  <span>You have unsaved changes.</span><span class="spacer"></span>
+  <button class="btn" id="discard" type="button">Discard</button>
+  <button class="btn primary" id="save" type="button">Save changes</button>
+</div></div>
+<div id="toasts" role="status" aria-live="polite"></div>
+<dialog id="dlg"></dialog>
+
+<script nonce="__NONCE__">
+(() => {
+'use strict';
+
+// ------------------------------------------------------------------------------------------------ plumbing
+const SECRET = document.querySelector('meta[name="connecto-secret"]').content;
+const TABS = [['start', 'Start'], ['people', 'People'], ['message', 'Message'], ['limits', 'Limits & schedule'],
+              ['history', 'History'], ['health', 'Health']];
+const WEEKDAYS = [['mon', 'Mon'], ['tue', 'Tue'], ['wed', 'Wed'], ['thu', 'Thu'], ['fri', 'Fri'], ['sat', 'Sat'], ['sun', 'Sun']];
+const SOURCE_LABEL = {yc: 'Y Combinator founders', csv: 'A CSV file', webpage: 'People on a web page', linkedin_search: 'A LinkedIn search'};
+const SOURCE_BLURB = {
+  yc: 'Founders from the public Y Combinator directory, filtered by batch, industry, region and more.',
+  csv: 'Any spreadsheet with a LinkedIn profile link column (LinkedIn data export, Apollo, Sales Navigator tools ...).',
+  webpage: 'A team, speakers or alumni page that links to LinkedIn profiles.',
+  linkedin_search: 'Results of a LinkedIn people search, read slowly through your own signed-in browser.',
+};
+const STATUS_CHIP = {sent: 'ok', dry_run: 'info', already_pending: 'info', already_connected: 'info', waiting: '', skipped: '',
+                     error: 'bad', limit_reached: 'warn', needs_email: '', no_connect_option: '', not_found: '', note_unavailable: 'warn'};
+
+let S = null;                 // server state
+let tab = 'start';
+let dirty = false;
+let job = null, jobNext = 0, pollTimer = null;
+const logBuf = [];
+let preview = null, history = null, health = null, renderInfo = null, suggestions = null, peopleList = null;
+
+const $ = (sel, root = document) => root.querySelector(sel);
+
+async function api(path, body) {
+  const opts = {headers: {'X-Connecto-Token': SECRET}, credentials: 'same-origin'};
+  if (body !== undefined) {
+    opts.method = 'POST';
+    opts.headers['Content-Type'] = 'application/json';
+    opts.body = JSON.stringify(body);
+  }
+  let res;
+  try { res = await fetch(path, opts); }
+  catch (e) { throw new Error('Cannot reach Connecto. Is the terminal window running `connecto ui` still open?'); }
+  const type = res.headers.get('content-type') || '';
+  const data = type.includes('json') ? await res.json() : null;
+  if (!res.ok) {
+    const err = new Error((data && data.error) || `Request failed (${res.status})`);
+    err.status = res.status;                      // (a network failure has none: nobody answered)
+    throw err;
+  }
+  return data !== null ? data : res;
+}
+
+// Everything on the page is built with createElement/textContent: names, titles and notes come from other people's
+// pages and must never be interpreted as HTML.
+function h(tag, props, ...kids) {
+  const el = document.createElement(tag);
+  for (const [k, v] of Object.entries(props || {})) {
+    if (v === null || v === undefined || v === false) continue;
+    if (k === 'class') el.className = v;
+    else if (k.startsWith('on')) el.addEventListener(k.slice(2), v);
+    else if (k === 'value') el.value = v;
+    else if (k === 'checked') el.checked = true;
+    else if (k === 'disabled') el.disabled = true;
+    else el.setAttribute(k, v === true ? '' : String(v));
+  }
+  for (const kid of kids.flat(Infinity)) {
+    if (kid === null || kid === undefined || kid === false) continue;
+    el.append(kid instanceof Node ? kid : document.createTextNode(String(kid)));
+  }
+  return el;
+}
+
+const getPath = (o, p) => p.split('.').reduce((a, k) => (a === null || a === undefined ? a : a[k]), o);
+function setPath(o, p, v) {
+  const ks = p.split('.');
+  let a = o;
+  for (let i = 0; i < ks.length - 1; i++) {
+    if (a[ks[i]] === null || a[ks[i]] === undefined) a[ks[i]] = /^\d+$/.test(ks[i + 1]) ? [] : {};
+    a = a[ks[i]];
+  }
+  a[ks[ks.length - 1]] = v;
+}
+const fmtTime = (iso) => (iso ? String(iso).replace('T', ' ').slice(0, 16) : '');
+const plural = (n, one, many) => `${n} ${n === 1 ? one : (many || one + 's')}`;
+
+function toast(message, kind = '') {
+  const t = h('div', {class: 'toast ' + kind}, message);
+  $('#toasts').append(t);
+  setTimeout(() => t.remove(), kind === 'bad' || kind === 'warn' ? 9000 : 5000);
+}
+
+function confirmDialog({title, body, ok = 'OK', danger = false, fields = null}) {
+  return new Promise((resolve) => {
+    const dlg = $('#dlg');
+    dlg.replaceChildren();
+    const form = h('form', {method: 'dialog'},
+      h('h2', {}, title), ...body,
+      h('div', {class: 'row end'},
+        h('button', {class: 'btn', value: 'cancel', type: 'submit'}, 'Cancel'),
+        h('button', {class: 'btn ' + (danger ? 'danger' : 'primary'), value: 'ok', type: 'submit'}, ok)));
+    dlg.append(form);
+    dlg.addEventListener('close', () => resolve(dlg.returnValue === 'ok' ? (fields ? fields() : true) : false), {once: true});
+    dlg.returnValue = '';
+    dlg.showModal();
+  });
+}
+
+// ------------------------------------------------------------------------------------------------ form controls bound to S.config
+function markDirty() {
+  if (!dirty) { dirty = true; $('#savebar').classList.add('show'); }
+}
+// Redraw the current tab but keep keyboard focus on the same setting (the data-path attribute names it).
+function renderKeepingFocus() {
+  const active = document.activeElement;
+  const key = active && active.getAttribute ? active.getAttribute('data-path') : null;
+  render();
+  if (key) { const again = $(`[data-path="${CSS.escape(key)}"]`); if (again) again.focus({preventScroll: true}); }
+}
+// rerender: the change shows or hides other settings, so the tab is redrawn.
+function bind(el, path, kind, rerender = false) {
+  const read = () => {
+    switch (kind) {
+      case 'bool': return el.checked;
+      case 'number': return el.value === '' ? null : Number(el.value);
+      case 'list': return el.value.split(/[,;\n]/).map((s) => s.trim()).filter(Boolean);
+      case 'lines': return el.value.split(/\n/).map((s) => s.trim()).filter(Boolean);
+      default: return el.value;
+    }
+  };
+  el.setAttribute('data-path', path);
+  el.addEventListener(kind === 'bool' || el.tagName === 'SELECT' ? 'change' : 'input', () => {
+    setPath(S.config, path, read());
+    markDirty();
+    if (rerender) renderKeepingFocus();
+  });
+  return el;
+}
+const listText = (v) => (Array.isArray(v) ? v.join(', ') : (v || ''));
+const linesText = (v) => (Array.isArray(v) ? v.join('\n') : (v || ''));
+const textInput = (path, ph = '', extra = {}) => bind(h('input', {type: 'text', value: getPath(S.config, path) ?? '', placeholder: ph, autocomplete: 'off', ...extra}), path, 'text');
+const numberInput = (path, min, max, extra = {}) => bind(h('input', {type: 'number', value: getPath(S.config, path) ?? '', min, max, ...extra}), path, 'number');
+const listInput = (path, ph = '') => bind(h('input', {type: 'text', value: listText(getPath(S.config, path)), placeholder: ph, autocomplete: 'off'}), path, 'list');
+const linesInput = (path, ph = '', rows = 3) => bind(h('textarea', {rows, placeholder: ph, value: linesText(getPath(S.config, path))}), path, 'lines');
+const selectInput = (path, options) => {
+  const cur = getPath(S.config, path);
+  const el = h('select', {}, options.map(([v, l]) => h('option', {value: v, ...(v === cur ? {selected: true} : {})}, l)));
+  el.value = cur;
+  return bind(el, path, 'text');
+};
+const checkbox = (path, label, hint, rerender = false) => h('label', {class: 'check'},
+  bind(h('input', {type: 'checkbox', ...(getPath(S.config, path) ? {checked: true} : {})}), path, 'bool', rerender),
+  h('span', {}, label, hint ? h('span', {class: 'hint'}, ' ', hint) : null));
+// A label joined to its control by id, and the hint read out as the control's description (not as part of its name).
+let fieldCount = 0;
+const field = (label, control, hint) => {
+  const id = 'f' + (++fieldCount);
+  control.id = control.id || id;
+  if (hint) control.setAttribute('aria-describedby', id + '-hint');
+  return h('div', {class: 'field'}, h('label', {class: 'lbl', for: control.id}, label), control,
+    hint ? h('span', {class: 'hint', id: id + '-hint'}, hint) : null);
+};
+const group = (label, control, hint) => h('div', {class: 'field', role: 'group', 'aria-label': label}, h('span', {class: 'lbl', 'aria-hidden': 'true'}, label), control,
+  hint ? h('span', {class: 'hint'}, hint) : null);
+const range = (path, min, max) => h('div', {class: 'pair'}, numberInput(`${path}.0`, min, max, {'aria-label': 'lowest'}), h('span', {}, 'to'),
+  numberInput(`${path}.1`, min, max, {'aria-label': 'highest'}));
+const card = (title, desc, ...kids) => h('section', {class: 'card'}, h('header', {}, h('h2', {}, title), desc ? h('p', {class: 'desc'}, desc) : null), ...kids);
+const chip = (text, kind = '') => h('span', {class: 'chip ' + kind}, text);
+const banner = (kind, content, action) => h('div', {class: 'banner ' + kind, role: 'status'}, h('div', {}, content), h('span', {class: 'spacer'}), action || null);
+const button = (text, onclick, cls = '', extra = {}) => h('button', {type: 'button', class: 'btn ' + cls, onclick, ...extra}, text);
+
+// ------------------------------------------------------------------------------------------------ loading / saving
+async function refreshState() {
+  const fresh = await api('/api/state');
+  const keep = dirty ? S.config : null;      // decided when the answer arrives: a change made while it was on its way is kept
+  S = fresh;
+  if (keep) S.config = keep;
+  if (S.job && (!job || S.job.id !== job.id) && S.job.state === 'running') { job = S.job; jobNext = 0; logBuf.length = 0; poll(); }
+}
+async function save() {
+  try {
+    const r = await api('/api/config', {config: S.config});
+    S.config = r.config; S.problems = r.problems; S.note_limit = r.note_limit;
+    dirty = false; $('#savebar').classList.remove('show');
+    preview = null; renderInfo = null;
+    await refreshState();
+    toast(r.warnings.length ? 'Saved, with notes: ' + r.warnings.join(' | ') : 'Saved.', r.warnings.length ? 'warn' : 'ok');
+    render();
+  } catch (e) { toast(e.message, 'bad'); }
+}
+async function discard() {
+  dirty = false; $('#savebar').classList.remove('show');
+  await refreshState(); render();
+}
+function go(name) { tab = name; render(); window.scrollTo({top: 0}); $('#view').focus({preventScroll: true}); }
+
+// ------------------------------------------------------------------------------------------------ header and tabs
+function renderHeader() {
+  const st = S.status || {};
+  const chips = $('#chips');
+  chips.replaceChildren();
+  if (job && job.state === 'running') chips.append(h('span', {class: 'chip info'}, h('span', {class: 'spin'}), ' ', job.kind.replace('_', ' ') + ' running'));
+  if (st.paused_until) chips.append(chip('Paused until ' + fmtTime(st.paused_until), 'warn'));
+  if (S.status) {
+    chips.append(chip(`Today ${st.sent_today} / ~${st.daily_target}`, st.sent_today >= st.daily_target ? 'ok' : ''));
+    chips.append(chip(`7 days ${st.sent_last_7_days} / ${st.weekly_cap}`));
+  }
+  if (S.queue) chips.append(chip(plural(S.queue.queued, 'person', 'people') + ' waiting'));
+}
+function renderTabs() {
+  const nav = $('#tabs');
+  nav.replaceChildren(...TABS.map(([id, label]) => h('button', {
+    type: 'button', role: 'tab', 'aria-selected': String(tab === id), onclick: () => go(id)}, label)));
+}
+function render() {
+  renderHeader(); renderTabs();
+  const root = $('#view');
+  root.replaceChildren();
+  ({start: renderStart, people: renderPeople, message: renderMessage, limits: renderLimits, history: renderHistory, health: renderHealth})[tab](root);
+}
+
+// ------------------------------------------------------------------------------------------------ jobs
+const jobBusy = () => Boolean(job && job.state === 'running');
+// Why a job cannot be started right now ('' = it can). Used to disable the buttons and to explain why.
+function jobGate(kind) {
+  const problems = S.problems || [];
+  if (!S.config.acknowledged_risks) return 'Read and accept the safety note first.';
+  if ((kind === 'run' || kind === 'dry_run') && problems.length) return problems[0];
+  if (S.busy_elsewhere) return 'Another run is in progress (probably the daily schedule).';
+  if (jobBusy()) return 'Something is already running.';
+  if (kind === 'fetch' && !(S.config.sources || []).some((s) => s.enabled !== false)) return 'Add a source of people first.';
+  return '';
+}
+const jobButton = (text, kind, onclick, cls = '') => {
+  const why = jobGate(kind);
+  return button(text, onclick, cls, {disabled: Boolean(why), title: why || null});
+};
+async function startJob(kind, extra = {}) {
+  if (dirty) { toast('Save your changes first.', 'warn'); return; }
+  try {
+    job = await api('/api/job/start', Object.assign({kind}, extra));
+    jobNext = 0; logBuf.length = 0;
+    render(); poll();
+  } catch (e) { toast(e.message, 'bad'); }
+}
+function poll() {
+  clearTimeout(pollTimer);
+  pollTimer = setTimeout(async () => {
+    try {
+      const r = await api(`/api/job?since=${jobNext}&id=${encodeURIComponent(job ? job.id : '')}`);
+      if (r.job) {
+        job = r.job; jobNext = r.next;
+        r.lines.forEach((l) => logBuf.push(l));
+        updateJobView();
+      }
+      if (job && job.state === 'running') { poll(); return; }
+      await refreshState();
+      if (job) jobFinished(job);
+      render();
+    } catch (e) {
+      logBuf.push('(lost contact with Connecto: ' + e.message + ')'); updateJobView(); poll();
+    }
+  }, 1200);
+}
+function jobFinished(j) {
+  const r = j.result || {};
+  const what = {login: 'Sign-in', fetch: 'Fetching people', dry_run: 'Dry run', run: 'Run'}[j.kind] || 'Job';
+  if (j.state === 'stopped') toast(`${what} stopped.`, 'warn');
+  else if (j.state === 'failed') toast(`${what} needs you: ${r.stop_reason || r.error || 'see the log'}`, 'bad');
+  else if (j.kind === 'run') toast(`Sent ${r.sent || 0} of ${r.attempted || 0}. ${r.stop_reason || ''}`, r.sent ? 'ok' : 'warn');
+  else if (j.kind === 'dry_run') toast(`Dry run finished: ${r.sent || 0} of ${r.attempted || 0} profiles could be invited. Nothing was sent.`, 'ok');
+  else if (j.kind === 'fetch') toast(`Fetching finished: ${plural(r.added || 0, 'new person', 'new people')}.`, 'ok');
+  else toast(`${what} finished.`, 'ok');
+}
+function updateJobView() {
+  const pre = $('#joblog');
+  if (pre) { pre.textContent = logBuf.slice(-500).join('\n'); pre.scrollTop = pre.scrollHeight; }
+  const status = $('#jobstatus');
+  if (status && job) status.textContent = jobSummary();
+}
+function jobSummary() {
+  if (!job) return '';
+  const names = {login: 'Signing in', fetch: 'Fetching people', dry_run: 'Dry run', run: 'Sending'};
+  if (job.state === 'running') return names[job.kind] + ' ...';
+  const r = job.result || {};
+  return `${names[job.kind]}: ${job.state}` + (r.stop_reason ? ' - ' + r.stop_reason : '');
+}
+async function stopJob() {
+  try { await api('/api/job/stop', {}); toast('Stopping after the current profile.'); } catch (e) { toast(e.message, 'bad'); }
+}
+
+// ------------------------------------------------------------------------------------------------ START
+function riskCard() {
+  const accept = h('input', {type: 'checkbox', id: 'accept'});
+  const btn = button('Continue', async () => {
+    S.config.acknowledged_risks = true; markDirty(); await save();
+  }, 'primary', {disabled: true});
+  accept.addEventListener('change', () => { btn.disabled = !accept.checked; });
+  return h('section', {class: 'card'},
+    h('header', {}, h('h2', {}, 'Before you start - please read this'), h('p', {class: 'desc'}, 'This is the one thing you should not skip.')),
+    h('div', {class: 'riskbox'}, S.risk_text.replace(/^Before you start, please read this:\n\n/, '')),
+    h('label', {class: 'check'}, accept, h('span', {}, 'I understand this, and I am using my own account on purpose.')),
+    h('div', {}, btn));
+}
+function steps() {
+  const st = S.status || {};
+  const bs = st.by_status || {};
+  const sources = (S.config.sources || []).filter((s) => s.enabled !== false).length;
+  const ranDry = (bs.dry_run || 0) > 0 || (st.total_sent || 0) > 0 || (st.recent_runs || []).some((r) => r.mode === 'dry-run');
+  return [
+    {id: 'about', title: 'About you and the safety note', done: S.config.acknowledged_risks && Boolean(S.config.me.first_name),
+     hint: 'Your first name signs each note. Accept the risk note.', action: ['Open', () => go('message')]},
+    {id: 'login', title: 'Sign in to LinkedIn once', done: Boolean(st.login_ok_at),
+     hint: 'A browser window opens; you sign in yourself. Connecto never sees your password.', action: ['Sign in', () => startJob('login')]},
+    {id: 'who', title: 'Choose who you want to meet', done: sources > 0 || (st.people || 0) > 0,
+     hint: 'Y Combinator founders, a CSV, a web page, a LinkedIn search - or add people by hand.', action: ['Choose', () => go('people')]},
+    {id: 'fetch', title: 'Collect the people', done: (st.people || 0) > 0,
+     hint: sources ? 'Fetches people from your sources (can take a while; it is polite and resumable).' : 'Add a source first, or add people by hand.',
+     action: sources ? ['Fetch', () => startJob('fetch')] : ['Add people', () => go('people')]},
+    {id: 'dry', title: 'Try a dry run', done: ranDry,
+     hint: 'Opens two profiles and shows what would happen. Nothing is sent.', action: ['Dry run', () => startJob('dry_run')]},
+    {id: 'send', title: 'Send your first few', done: (st.total_sent || 0) > 0,
+     hint: 'A handful of real invitations, to see how it feels.', action: ['Send a few', () => sendDialog()]},
+    {id: 'daily', title: 'Let it run by itself every day', done: Boolean(S.schedule && S.schedule.installed),
+     hint: 'A few invitations a day at random times, while you are logged in to your computer.', action: ['Set up', () => go('limits')]},
+  ];
+}
+function renderStart(root) {
+  const st = S.status || {};
+  if (!S.config.acknowledged_risks) root.append(riskCard());
+  if (st.paused_until) root.append(banner('warn', ['Sending is paused until ', fmtTime(st.paused_until), st.paused_reason ? ': ' + st.paused_reason : '.'],
+    button('Resume', async () => { await api('/api/resume', {}); await refreshState(); render(); toast('Resumed.', 'ok'); }, 'small')));
+  if (st.note_blocked_until) root.append(banner('info', `LinkedIn is limiting personal notes on this account until about ${st.note_blocked_until.slice(0, 10)}, so invitations go out without a note meanwhile (free accounts get only a few notes a month).`));
+  if (S.busy_elsewhere) root.append(banner('info', 'A Connecto run (probably the daily schedule) is in progress right now. Wait for it to finish before starting another.'));
+  const problems = S.problems || [];
+  if (problems.length && S.config.acknowledged_risks && !dirty) root.append(banner('warn', problems.join(' ')));
+
+  root.append(h('section', {class: 'card'},
+    h('header', {}, h('h2', {}, 'Today')),
+    h('div', {class: 'stats'},
+      stat(S.status ? `${st.sent_today}` : '0', `sent today (target about ${st.daily_target || '-'})`),
+      stat(S.status ? `${st.sent_last_7_days}` : '0', `in the last 7 days (cap ${st.weekly_cap || '-'})`),
+      stat(S.queue ? String(S.queue.queued) : '0', 'people waiting'),
+      stat(S.status ? String(st.total_sent) : '0', 'sent in total'))));
+
+  const list = steps();
+  const hasSources = (S.config.sources || []).some((x) => x.enabled !== false);
+  const nextId = (list.find((s) => !s.done) || {}).id;
+  root.append(card('Getting set up', 'Work down the list; each step is safe to repeat.',
+    h('ol', {class: 'steps'}, list.map((s, i) => h('li', {class: (s.done ? 'done ' : '') + (s.id === nextId ? 'next' : '')},
+      h('span', {class: 'dot', 'aria-hidden': 'true'}, s.done ? '✓' : String(i + 1)),
+      h('div', {class: 'what'}, h('b', {}, s.title), h('span', {}, s.hint)),
+      s.done ? chip('done', 'ok') : null,
+      stepButton(s, s.id === nextId ? 'primary small' : 'small', hasSources))))));
+
+  const busy = jobBusy();
+  root.append(card('Do something now', 'These open a real browser window on this computer. Leave it alone while it works; it stops by itself.',
+    h('div', {class: 'row'},
+      jobButton('Dry run (2 profiles, sends nothing)', 'dry_run', () => startJob('dry_run')),
+      jobButton('Send a few now ...', 'run', () => sendDialog(), 'primary'),
+      jobButton('Fetch people', 'fetch', () => startJob('fetch')),
+      jobButton('Sign in to LinkedIn', 'login', () => startJob('login')),
+      h('span', {class: 'spacer'}),
+      busy ? button('Stop', stopJob, 'danger') : null),
+    h('div', {class: 'muted', id: 'jobstatus', 'aria-live': 'polite'}, jobSummary()),
+    (job || logBuf.length) ? h('pre', {class: 'log', id: 'joblog', tabindex: '0', 'aria-label': 'Activity log'}, logBuf.slice(-500).join('\n')) : null));
+  if (busy) updateJobView();
+}
+function stepButton(s, cls, sources) {
+  const kind = {login: 'login', fetch: 'fetch', dry: 'dry_run', send: 'run'}[s.id];
+  if (!kind || (s.id === 'fetch' && !sources)) return button(s.action[0], s.action[1], cls);      // these just open a tab
+  return jobButton(s.action[0], kind, s.action[1], cls);
+}
+const stat = (value, label) => h('div', {class: 'stat'}, h('b', {}, value), h('span', {}, label));
+
+async function sendDialog() {
+  const limit = h('input', {type: 'number', min: 1, max: S.ceilings.per_run_max, value: 3, id: 'sendlimit'});
+  // Enter inside the field would "press" the first button (Cancel) and close the dialog: make it do nothing instead.
+  limit.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') ev.preventDefault(); });
+  const hours = h('input', {type: 'checkbox', id: 'sendhours'});
+  const ok = await confirmDialog({
+    title: 'Send real invitations now?', ok: 'Send now',
+    body: [
+      h('p', {}, 'This sends real LinkedIn invitations from your account, within your daily and weekly limits. A browser window will open; please leave it alone until it closes.'),
+      h('label', {class: 'field'}, h('span', {class: 'lbl'}, 'At most how many this time?'), limit),
+      h('label', {class: 'check'}, hours, h('span', {}, 'Ignore my active hours and days (a manual run outside them)')),
+    ],
+    fields: () => ({limit: Number(limit.value) || 3, ignore_hours: hours.checked}),
+  });
+  if (ok) startJob('run', {confirm: true, limit: ok.limit, ignore_hours: ok.ignore_hours});
+}
+
+// ------------------------------------------------------------------------------------------------ PEOPLE
+function defaultSource(type) {
+  return {
+    yc: {type, enabled: true, batches: [], industries: [], regions: [], tags: [], keywords: [], exclude_keywords: []},
+    csv: {type, enabled: true, path: ''},
+    webpage: {type, enabled: true, urls: [], render: false},
+    linkedin_search: {type, enabled: true, queries: [], urls: [], max_pages: 3, skip_first_degree: true},
+  }[type];
+}
+function sourceCard(i, spec) {
+  const p = `sources.${i}`;
+  const fields = {
+    yc: () => h('div', {class: 'grid2'},
+      field('Batches', listInput(`${p}.batches`, 'S26, W26'), 'Empty = every batch. The newest batches are invited first.'),
+      field('Industries', listInput(`${p}.industries`, 'Fintech, B2B')),
+      field('Regions', listInput(`${p}.regions`, 'India, Europe')),
+      field('Tags', listInput(`${p}.tags`, 'AI, Payments')),
+      field('Words about what the company does', listInput(`${p}.keywords`, 'payments, climate')),
+      field('Leave out companies mentioning', listInput(`${p}.exclude_keywords`, 'crypto')),
+      field('Largest team size (0 = any)', numberInput(`${p}.max_team_size`, 0, 100000)),
+      h('div', {}, checkbox(`${p}.only_top_companies`, 'Only companies YC marks as "top"'))),
+    csv: () => field('File path', textInput(`${p}.path`, '~/leads.csv'), 'Must have a LinkedIn profile link column; names, companies and titles are used if present.'),
+    webpage: () => h('div', {class: 'grid2'},
+      field('Page addresses (one per line)', linesInput(`${p}.urls`, 'https://example.com/team')),
+      h('div', {}, checkbox(`${p}.render`, 'The page builds its list with JavaScript', '(open it in a hidden browser first)'))),
+    linkedin_search: () => h('div', {class: 'grid2'},
+      field('Searches (one per line)', linesInput(`${p}.queries`, 'head of design fintech india')),
+      field('...or addresses of LinkedIn people searches you set up (one per line)', linesInput(`${p}.urls`, 'https://www.linkedin.com/search/results/people/?...')),
+      field('Result pages to read per run', numberInput(`${p}.max_pages`, 1, 10), 'Connecto reads only a few pages, slowly.'),
+      h('div', {}, checkbox(`${p}.skip_first_degree`, 'Skip people I am already connected to'))),
+  }[spec.type];
+  const onBox = checkbox(`${p}.enabled`, 'On');
+  const box = h('div', {class: 'source' + (spec.enabled === false ? ' off' : '')},
+    h('header', {}, h('h3', {}, SOURCE_LABEL[spec.type] || spec.type), onBox,
+      button('Remove', () => { S.config.sources.splice(i, 1); markDirty(); render(); }, 'small danger')),
+    h('p', {class: 'hint'}, SOURCE_BLURB[spec.type] || ''),
+    fields ? fields() : null);
+  // dim the card at once (no redraw, so keyboard focus stays where it is)
+  onBox.querySelector('input').addEventListener('change', (ev) => box.classList.toggle('off', !ev.target.checked));
+  return box;
+}
+function renderPeople(root) {
+  const sources = S.config.sources || [];
+  const addSel = h('select', {id: 'newsource', 'aria-label': 'Kind of source to add'}, S.source_types.map((t) => h('option', {value: t}, SOURCE_LABEL[t] || t)));
+  root.append(card('Where people come from', 'Add as many as you like. Connecto mixes them and invites the best matches first.',
+    sources.length ? sources.map((s, i) => sourceCard(i, s)) : h('p', {class: 'muted'}, 'No source yet. Add one below, or add people by hand further down.'),
+    h('div', {class: 'row'}, addSel, button('Add this source', () => { S.config.sources.push(defaultSource(addSel.value)); markDirty(); render(); }))));
+
+  root.append(card('Narrow it down (optional)', 'These filters apply to everyone found by a source. People you add by hand are always invited, whatever the filters say. A word matches in a person\'s title, headline, company, tags and so on. Empty = no filter.',
+    h('div', {class: 'grid2'},
+      field('Must mention any of these words', listInput('targets.keywords', 'fintech, payments')),
+      field('Job title contains any of', listInput('targets.titles', 'founder, head of')),
+      field('Located in any of', listInput('targets.locations', 'India, Bangalore')),
+      field('Never anyone mentioning', listInput('targets.exclude_keywords', 'recruiter, agency')),
+      field('Job title must not contain', listInput('targets.exclude_titles', 'intern, student')),
+      field('Who first?', selectInput('order', [['priority', 'Best matches first (shuffled within ties)'], ['random', 'Random'], ['newest_added', 'Most recently added'], ['oldest_added', 'Oldest added']])))));
+
+  if (S.config.ai && S.config.ai.enabled) root.append(suggestCard());
+
+  root.append(handCard());
+  root.append(previewCard());
+}
+function suggestCard() {
+  const box = h('textarea', {rows: 2, placeholder: 'e.g. heads of design at fintech startups in India', 'aria-label': 'Describe who you want to meet'});
+  const out = h('div', {});
+  const draw = () => {
+    out.replaceChildren();
+    if (!suggestions) return;
+    const s = suggestions;
+    const row = (label, arr) => (arr && arr.length ? h('div', {class: 'row'}, h('b', {}, label), arr.map((x) => chip(x))) : null);
+    out.append(h('div', {class: 'tpl'},
+      row('Words', s.keywords), row('Titles', s.titles), row('Places', s.locations), row('Leave out', s.exclude_keywords), row('Search ideas', s.search_queries),
+      s.yc ? h('div', {class: 'row'}, h('b', {}, 'YC'), [...(s.yc.batches || []), ...(s.yc.industries || []), ...(s.yc.tags || [])].map((x) => chip(x))) : null,
+      h('div', {class: 'row'},
+        button('Add to my filters', () => {
+          const t = S.config.targets;
+          for (const k of ['keywords', 'titles', 'locations', 'exclude_keywords']) t[k] = [...new Set([...(t[k] || []), ...(s[k] || [])])];
+          if (s.search_queries && s.search_queries.length) {
+            let src = S.config.sources.find((x) => x.type === 'linkedin_search');
+            if (!src) { src = defaultSource('linkedin_search'); S.config.sources.push(src); }
+            src.queries = [...new Set([...(src.queries || []), ...s.search_queries])];
+          }
+          if (s.yc) {
+            let src = S.config.sources.find((x) => x.type === 'yc');
+            if (!src) { src = defaultSource('yc'); S.config.sources.push(src); }
+            for (const k of ['batches', 'industries', 'tags']) src[k] = [...new Set([...(src[k] || []), ...(s.yc[k] || [])])];
+          }
+          suggestions = null; markDirty(); render(); toast('Added. Review and save.', 'ok');
+        }, 'primary small'),
+        button('Dismiss', () => { suggestions = null; draw(); }, 'small'))));
+  };
+  draw();
+  return card('Describe who you want to meet', 'The AI helper turns a sentence into filters. It sees only what you type here - no personal data.',
+    box, h('div', {class: 'row'}, button('Suggest filters', async (ev) => {
+      ev.target.disabled = true;
+      try { suggestions = (await api('/api/ai/suggest', {description: box.value})).suggestions; draw(); }
+      catch (e) { toast(e.message, 'bad'); }
+      ev.target.disabled = false;
+    })), out);
+}
+function handCard() {
+  const add = h('textarea', {rows: 4, placeholder: 'Jane Doe, Acme Pay, CEO, https://www.linkedin.com/in/jane-doe-1a2b3c/\nhttps://www.linkedin.com/in/someone-else/', 'aria-label': 'People to add'});
+  const skip = h('textarea', {rows: 2, placeholder: 'https://www.linkedin.com/in/someone-i-know/', 'aria-label': 'People to never contact'});
+  return card('Add people yourself', 'One person per line: a profile link, or "Name, Company, Title, link". Hand-added people are invited first. A link without a name gets a plain invitation (Connecto never guesses names).',
+    add, h('div', {class: 'row'}, button('Add these people', async () => {
+      try {
+        const r = await api('/api/people/add', {text: add.value});
+        add.value = '';
+        toast(`Added ${plural(r.added, 'person', 'people')}.` + (r.nameless ? ` ${plural(r.nameless, 'has', 'have')} no name, so a plain invitation.` : '') + (r.problems.length ? ' ' + r.problems[0] : ''), 'ok');
+        await refreshState(); preview = null; render();
+      } catch (e) { toast(e.message, 'bad'); }
+    }, 'primary')),
+    h('details', {}, h('summary', {}, 'Never contact these people'),
+      h('div', {class: 'grid2'}, skip, h('div', {class: 'row'}, button('Never contact', async () => {
+        try { const r = await api('/api/people/skip', {text: skip.value}); toast(`Will never contact ${plural(r.skipped, 'person', 'people')}.`, 'ok'); skip.value = ''; await refreshState(); preview = null; render(); }
+        catch (e) { toast(e.message, 'bad'); }
+      })))));
+}
+async function loadPreview(ai) {
+  preview = {loading: true}; render();
+  try { preview = await api('/api/preview?sample=12' + (ai ? '&ai=1' : '')); }
+  catch (e) { preview = null; toast(e.message, 'bad'); }
+  render();
+}
+function previewCard() {
+  const body = [];
+  if (dirty) body.push(banner('info', 'You have unsaved changes - save them to see an up-to-date preview.'));
+  if (!preview) {
+    body.push(h('div', {class: 'row'}, button('Show who would be invited', () => loadPreview(false), 'primary')));
+  } else if (preview.loading) {
+    body.push(h('p', {class: 'muted'}, h('span', {class: 'spin'}), ' Working it out ...'));
+  } else {
+    const p = preview;
+    body.push(h('div', {class: 'stats'}, stat(String(p.people_total), 'people stored'), stat(String(p.matching), 'match your filters'),
+      stat(String(p.queued), 'waiting to be invited'), stat(p.queued ? `~${p.days_estimate}` : '0', `${p.days_estimate === 1 ? 'day' : 'days'} at about ${p.daily_target} a day`)));
+    body.push(h('p', {class: 'muted'}, 'Filters: ' + p.targets));
+    for (const w of p.warnings) body.push(banner('warn', w));
+    const bd = Object.entries(p.breakdown || {});
+    if (bd.length) body.push(h('div', {class: 'grid2'}, bd.map(([name, top]) => h('div', {}, h('b', {}, name[0].toUpperCase() + name.slice(1)),
+      h('div', {class: 'row'}, top.map(([k, n]) => chip(`${k} ${n}`)))))));
+    if (p.sample.length) body.push(h('div', {class: 'scroll'}, h('table', {},
+      h('thead', {}, h('tr', {}, ['Name', 'Title', 'Company', 'Location', 'From'].map((c) => h('th', {}, c)))),
+      h('tbody', {}, p.sample.map((x) => h('tr', {}, h('td', {}, x.name || '(no name)'), h('td', {class: 'wrap'}, x.title), h('td', {class: 'wrap'}, x.company), h('td', {}, x.location), h('td', {}, x.source)))))));
+    if (p.example_notes.length) {
+      body.push(h('h3', {}, `What the notes would say (limit ${p.note_limit} characters)`));
+      for (const ex of p.example_notes) body.push(h('div', {class: 'tpl'}, h('div', {class: 'row'}, h('b', {}, 'To ' + ex.person), chip(ex.kind === 'ai' ? 'AI opening line' : 'template', ex.kind === 'ai' ? 'info' : ''), chip(ex.chars + ' chars')), h('div', {class: 'note'}, ex.note)));
+    } else if (p.queued) body.push(h('p', {class: 'muted'}, 'No note would be written (notes are off or no template fits); invitations would go out plain.'));
+    body.push(h('div', {class: 'row'}, button('Shuffle', () => loadPreview(false)),
+      S.config.ai && S.config.ai.enabled ? button('Examples with the AI helper', () => loadPreview(true), '', {title: 'Spends a few AI calls'}) : null));
+  }
+  return card('Who would be invited', 'A preview only - nothing is sent.', ...body);
+}
+
+// ------------------------------------------------------------------------------------------------ MESSAGE
+async function renderPreviewNotes() {
+  try { renderInfo = await api('/api/render', {config: S.config}); } catch (e) { toast(e.message, 'bad'); }
+  render();
+}
+function templateEditor() {
+  const own = S.config.message.templates;
+  const items = [];
+  if (!own.length) {
+    items.push(h('p', {class: 'muted'}, 'You have not written any, so Connecto uses these friendly built-in ones (and picks one at random for each person):'));
+    const defaults = [...S.default_templates, ...(S.config.ai.enabled ? S.default_ai_templates : [])];
+    defaults.forEach((t, i) => items.push(h('div', {class: 'tpl'}, h('div', {class: 'note'}, t), previewFor(i))));
+    items.push(h('div', {class: 'row'}, button('Write my own', () => { S.config.message.templates = [S.default_templates[0]]; markDirty(); renderInfo = null; render(); }, 'primary'),
+      button('Show examples with a sample person', renderPreviewNotes)));
+  } else {
+    own.forEach((t, i) => {
+      const ta = h('textarea', {rows: 3, 'aria-label': `Template ${i + 1}`, value: t});
+      ta.addEventListener('input', () => { own[i] = ta.value; markDirty(); });
+      items.push(h('div', {class: 'tpl'}, ta, previewFor(i),
+        h('div', {class: 'row'}, h('span', {class: 'hint'}, 'Template ' + (i + 1)), h('span', {class: 'spacer'}),
+          button('Remove', () => { own.splice(i, 1); markDirty(); renderInfo = null; render(); }, 'small danger'))));
+    });
+    items.push(h('div', {class: 'row'}, button('Add another template', () => { own.push('Hi {first_name}, I\'m {me_first_name}. Would love to connect.'); markDirty(); render(); }),
+      button('Preview with a sample person', renderPreviewNotes, 'primary'),
+      button('Go back to the built-in ones', () => { S.config.message.templates = []; markDirty(); renderInfo = null; render(); })));
+  }
+  return items;
+}
+function previewFor(i) {
+  if (!renderInfo || !renderInfo.results[i]) return null;
+  const r = renderInfo.results[i];
+  const who = renderInfo.person.name ? `${renderInfo.person.name}${renderInfo.person.company ? ' at ' + renderInfo.person.company : ''}${renderInfo.person.real ? '' : ' (made-up example)'}` : '';
+  if (!r.ok) return h('div', {class: 'banner warn'}, r.missing.length ? `Not usable for ${who}: it needs ${r.missing.map((m) => '{' + m + '}').join(', ')}.` : 'Not usable for this example.');
+  return h('div', {}, h('div', {class: 'note'}, r.text), h('div', {class: 'hint'}, `${r.chars} of ${renderInfo.limit} characters` + (r.uses_hook ? ' - the AI writes the {hook} part for each person; shown here with a made-up line' : '') + (who ? ` - example: ${who}` : '')));
+}
+function aiCard() {
+  const ai = S.config.ai;
+  const preset = S.ai.providers.find((p) => p.id === ai.provider) || S.ai.providers[0];
+  const keyNameNow = () => (ai.provider === 'custom' ? ai.api_key_env : preset.key_env) || '';
+  const keyName = keyNameNow();
+  const present = keyName && S.ai.key_present[keyName];
+  const keyBox = h('input', {type: 'password', autocomplete: 'off', placeholder: present ? 'A key is saved. Paste a new one to replace it.' : 'Paste your key', 'aria-label': 'API key'});
+  const result = h('div', {class: 'muted', 'aria-live': 'polite'});
+  const sel = h('select', {}, S.ai.providers.map((p) => h('option', {value: p.id}, p.label)));
+  sel.value = ai.provider;
+  sel.setAttribute('data-path', 'ai.provider');
+  sel.addEventListener('change', () => { ai.provider = sel.value; markDirty(); renderKeepingFocus(); });
+  return card('AI helper (optional)', 'Writes one personal opening line per person, which your template wraps in your own words. Without it, Connecto just fills your templates, which already works well. If the helper ever fails, notes still go out.',
+    checkbox('ai.enabled', 'Use the AI helper', null, true),
+    ai.enabled ? h('div', {class: 'grid2'},
+      field('Which service', sel, preset.free_note),
+      h('div', {class: 'field'}, h('span', {class: 'lbl'}, 'What leaves your computer'), h('span', {class: 'hint'}, 'Only a few public facts (job title, company, a short description) - never names, links, e-mails or locations. ' + preset.privacy_note)),
+      (preset.needs_key || ai.provider === 'custom') ? h('div', {class: 'field'}, h('span', {class: 'lbl'}, 'API key'), keyBox,
+        h('span', {class: 'hint'}, present ? 'A key is saved on this computer (never shown again, never in config.yaml).' : 'Saved only on this computer, in a private file. ', preset.signup_url ? h('a', {href: preset.signup_url, target: '_blank', rel: 'noreferrer noopener'}, 'Get a free key') : null),
+        h('div', {class: 'row'},
+          button('Save key', async () => {
+            const name = keyNameNow();
+            if (!name) { toast('First type a name for the key setting below (for example MY_SERVER_API_KEY).', 'warn'); return; }
+            if (!keyBox.value.trim()) { toast('Paste the key into the box first.', 'warn'); return; }
+            try {
+              await api('/api/ai/key', {env: name, value: keyBox.value, base_url: ai.base_url || ''}); keyBox.value = '';
+              await refreshState(); S.ai.key_present[name] = true;          // (a name you have not saved yet is not in the server's list)
+              render(); toast('Key saved.', 'ok');
+            } catch (e) { toast(e.message, 'bad'); }
+          }, 'small'),
+          present ? button('Remove key', async () => {
+            try {
+              await api('/api/ai/key', {env: keyName, remove: true});
+              await refreshState(); S.ai.key_present[keyName] = false;
+              render(); toast('Key removed.', 'ok');
+            } catch (e) { toast(e.message, 'bad'); }
+          }, 'small danger') : null)) : null,
+      (ai.provider === 'custom' || preset.local) ? field('Server address', textInput('ai.base_url', preset.base_url || 'http://localhost:1234/v1'), preset.local ? 'Leave empty for the default.' : 'An OpenAI-compatible address ending in /v1.') : null,
+      ai.provider === 'custom' ? field('Name of the key setting', textInput('ai.api_key_env', 'MY_SERVER_API_KEY'), 'Capital letters and underscores, with KEY, TOKEN or SECRET in it. Leave empty if the server needs no key.') : null,
+      field('Model (optional)', textInput('ai.model', 'chosen automatically'), 'Leave empty: Connecto picks a current one the service offers.'),
+      field('Most AI calls per day', numberInput('ai.max_calls_per_day', 0, 1000), 'A safety budget; free plans have their own limits too.')) : null,
+    ai.enabled ? h('div', {class: 'row'}, button('Test connection', async (ev) => {
+      ev.target.disabled = true; result.textContent = 'Testing ...';
+      try { const r = await api('/api/ai/test', {ai: S.config.ai}); result.textContent = (r.ok ? 'OK: ' : 'Problem: ') + r.message; result.className = r.ok ? 'chip ok' : 'chip bad'; }
+      catch (e) { result.textContent = e.message; result.className = 'chip bad'; }
+      ev.target.disabled = false;
+    }), result) : null);
+}
+function renderMessage(root) {
+  const m = S.config.message;
+  root.append(card('About you', 'Fills {me_first_name}, {me_about}, {me_project} and {me_project_blurb} in your notes. Keep it short and true.',
+    h('div', {class: 'grid2'},
+      field('Your first name', textInput('me.first_name', 'Asha'), 'Signs the note. Required while notes are on.'),
+      field('One line about you', textInput('me.about', 'a product designer in Pune'), 'Optional, e.g. "a product designer in Pune".'),
+      field('What you are building or looking for', textInput('me.project', ''), 'Optional.'),
+      field('One short clause about it', textInput('me.project_blurb', ''), 'Optional.'))));
+  root.append(card('Your LinkedIn account and the note',
+    'LinkedIn limits the note length by plan, and free accounts only get a few personal notes a month. When it refuses a note, Connecto sends the invitation without one (or pauses, if you prefer).',
+    h('div', {class: 'grid2'},
+      field('Which plan do you have?', selectInput('message.plan', [['free', `Free - notes up to ${S.plans.free} characters`], ['premium', `Premium / Sales Navigator - notes up to ${S.plans.premium} characters`]])),
+      field('If LinkedIn will not take a note', selectInput('message.if_note_unavailable', [['plain', 'Send the invitation without a note'], ['stop', 'Pause until notes work again']]))),
+    checkbox('message.send_note', 'Send a personal note with each invitation', '(off = plain invitations)')));
+  root.append(card('Note templates', 'Use {first_name}, {company}, {title}, {location}, {me_first_name}, {me_about} and any other detail a person has. Text inside [[double brackets]] is dropped when a value is missing or the note is too long. {hook} is the optional AI opening line.',
+    ...templateEditor()));
+  root.append(aiCard());
+}
+
+// ------------------------------------------------------------------------------------------------ LIMITS
+function renderLimits(root) {
+  const c = S.ceilings, cfg = S.config;
+  root.append(card('How much, how fast', `These numbers are safety limits, not goals. Connecto never goes above built-in ceilings (${c.daily_max} a day, ${c.weekly_max} a week, ${c.per_run_max} per run, at least ${c.delay_min_seconds} seconds between profiles), whatever you type here.`,
+    h('div', {class: 'grid2'},
+      group('Invitations per day', range('limits.daily', 1, c.daily_max), 'A random target in this range is picked for each day.'),
+      field('Invitations per rolling 7 days (most)', numberInput('limits.weekly', 1, c.weekly_max), 'LinkedIn itself allows roughly 100 a week; staying well below is the safe side.'),
+      group('Invitations per run', range('limits.per_run', 1, c.per_run_max)),
+      group('Seconds between two profiles', range('limits.delay_seconds', c.delay_min_seconds, 900)),
+      field('Stop after this many errors in a row', numberInput('limits.stop_after_errors', 1, c.errors_stop_max), 'Usually means LinkedIn changed something or you were signed out.'))));
+
+  const hours = cfg.schedule.active_hours || [];
+  const on = h('input', {type: 'checkbox', ...(hours.length ? {checked: true} : {})});
+  const start = h('input', {type: 'time', value: hours[0] || '09:00', 'aria-label': 'From'});
+  const end = h('input', {type: 'time', value: hours[1] || '20:30', 'aria-label': 'Until'});
+  // (the settings are read from S.config when the control is used, not from the object that was current when it was drawn: a
+  // save replaces that object a moment before the page is redrawn, and a change made in between would go to the old one)
+  const sync = () => { S.config.schedule.active_hours = on.checked ? [start.value, end.value] : []; start.disabled = end.disabled = !on.checked; markDirty(); };
+  [on, start, end].forEach((el) => el.addEventListener('change', sync)); start.disabled = end.disabled = !on.checked;
+  const dayBoxes = WEEKDAYS.map(([id, label]) => {
+    const cb = h('input', {type: 'checkbox', ...(cfg.schedule.active_days.includes(id) ? {checked: true} : {})});
+    cb.addEventListener('change', () => {
+      const set = new Set(S.config.schedule.active_days); if (cb.checked) set.add(id); else set.delete(id);
+      S.config.schedule.active_days = WEEKDAYS.map(([d]) => d).filter((d) => set.has(d)); markDirty();
+    });
+    return h('label', {class: 'check'}, cb, h('span', {}, label));
+  });
+  root.append(card('When Connecto may send', 'People notice patterns. Connecto only sends inside these hours and days, and starts each scheduled run at a slightly different time.',
+    h('div', {class: 'grid2'},
+      h('div', {class: 'field'}, h('label', {class: 'check'}, on, h('span', {}, 'Only send between')), h('div', {class: 'pair'}, start, h('span', {}, 'and'), end)),
+      group('Days', h('div', {class: 'row'}, dayBoxes)),
+      field('Random start delay (minutes, up to)', numberInput('schedule.start_jitter_minutes', 0, 120), 'Scheduled runs wait a random time up to this long.'),
+      h('div', {}, checkbox('schedule.fetch_before_send', 'Top up the list of people before each scheduled run'),
+        checkbox('notify', 'Show a desktop notification when something needs me')))));
+
+  const sch = S.schedule || {};
+  const times = h('input', {type: 'text', value: (cfg.schedule.times || []).join(', '), 'aria-label': 'Run times', placeholder: '10:40, 18:20'});
+  times.addEventListener('input', () => { S.config.schedule.times = times.value.split(/[,\s]+/).filter(Boolean); markDirty(); });
+  root.append(card('Run by itself every day', 'Uses your computer\'s own scheduler (launchd on macOS, cron on Linux, Task Scheduler on Windows). Your computer must be on and you must be logged in at those times; Connecto opens a visible browser window.',
+    h('div', {class: 'row'}, chip(sch.installed ? 'On' : 'Off', sch.installed ? 'ok' : ''), h('span', {}, sch.message || '')),
+    field('Times (24-hour, comma separated)', times, 'Each run sends only a few invitations and waits a random time before starting.'),
+    h('div', {class: 'row'},
+      button(sch.installed ? 'Update the daily schedule' : 'Turn on daily runs', async () => {
+        if (dirty) { toast('Save your changes first.', 'warn'); return; }
+        try { const r = await api('/api/schedule', {action: 'install', times: S.config.schedule.times}); toast(r.messages.join(' '), r.ok ? 'ok' : 'bad'); await refreshState(); render(); }
+        catch (e) { toast(e.message, 'bad'); }
+      }, 'primary'),
+      sch.installed ? button('Turn off', async () => { const r = await api('/api/schedule', {action: 'uninstall'}); toast(r.messages.join(' '), r.ok ? 'ok' : 'bad'); await refreshState(); render(); }, 'danger') : null),
+    (sch.details && sch.details.length) ? h('details', {}, h('summary', {}, 'Details'), h('pre', {class: 'note'}, sch.details.join('\n'))) : null));
+
+  root.append(card('Browser', 'Connecto uses its own browser profile, separate from your everyday one, and keeps the window visible.',
+    h('div', {class: 'grid2'},
+      field('Which browser', selectInput('browser.channel', [['chrome', 'Google Chrome'], ['msedge', 'Microsoft Edge'], ['chromium', 'Playwright\'s Chromium']]),
+        'If it is not installed, Connecto falls back to Playwright\'s Chromium.'),
+      h('div', {}, checkbox('browser.headless', 'Hide the browser window', '(not recommended: you cannot watch it, and hidden browsers are easier to flag)')))));
+}
+
+// ------------------------------------------------------------------------------------------------ HISTORY
+async function loadHistory() {
+  try { history = await api('/api/history'); } catch (e) { toast(e.message, 'bad'); }
+  render();
+}
+function renderHistory(root) {
+  if (!history) { root.append(card('History', 'Loading ...')); loadHistory(); return; }
+  root.append(card('Recent runs', null, history.runs.length ? h('div', {class: 'scroll'}, h('table', {},
+    h('thead', {}, h('tr', {}, ['Started', 'Kind', 'Sent', 'Tried', 'How it ended'].map((c) => h('th', {}, c)))),
+    h('tbody', {}, history.runs.map((r) => h('tr', {}, h('td', {}, fmtTime(r.started_at)), h('td', {}, r.mode), h('td', {}, String(r.sent || 0)), h('td', {}, String(r.attempted || 0)), h('td', {class: 'wrap'}, r.stop_reason || 'in progress')))))) : h('p', {class: 'muted'}, 'Nothing has run yet.')));
+  root.append(card('Recent invitations', null,
+    h('div', {class: 'row'}, button('Download everything as CSV', async () => {
+      try {
+        const res = await api('/api/export.csv');
+        const url = URL.createObjectURL(await res.blob());
+        const a = h('a', {href: url, download: 'connecto-invitations.csv'}); document.body.append(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+      } catch (e) { toast(e.message, 'bad'); }
+    }), button('Refresh', loadHistory)),
+    history.invites.length ? h('div', {class: 'scroll'}, h('table', {},
+      h('thead', {}, h('tr', {}, ['When', 'Who', 'Company', 'Outcome', 'Note / detail'].map((c) => h('th', {}, c)))),
+      h('tbody', {}, history.invites.map((i) => h('tr', {}, h('td', {}, fmtTime(i.updated_at)), h('td', {class: 'wrap'}, i.full_name || i.linkedin_url), h('td', {class: 'wrap'}, i.company || ''),
+        h('td', {}, chip(i.status.replace(/_/g, ' '), STATUS_CHIP[i.status] || '')), h('td', {class: 'wrap'}, i.note || i.detail || '')))))) : h('p', {class: 'muted'}, 'No invitations yet.')));
+}
+
+// ------------------------------------------------------------------------------------------------ HEALTH
+async function loadHealth(extra = '') {
+  health = {loading: true}; render();
+  try { health = await api('/api/doctor?' + extra); } catch (e) { health = null; toast(e.message, 'bad'); }
+  render();
+}
+function renderHealth(root) {
+  const KIND = {ok: 'ok', warn: 'warn', fail: 'bad', info: 'info'};
+  const LABEL = {ok: 'OK', warn: 'Look', fail: 'Fix', info: 'Info'};
+  const controls = h('div', {class: 'row'}, button('Check everything', () => loadHealth(), 'primary'),
+    button('Also test the AI helper', () => loadHealth('online=1'), '', {title: 'One tiny request'}),
+    button('Also start a test browser', () => loadHealth('launch=1'), '', {title: 'Opens and closes a hidden browser'}));
+  if (!health) { root.append(card('Health check', 'Checks that the browser, settings, sources, AI helper and schedule are in place. Nothing is sent to LinkedIn.', controls)); return; }
+  if (health.loading) { root.append(card('Health check', null, h('p', {class: 'muted'}, h('span', {class: 'spin'}), ' Checking ...'))); return; }
+  const s = health.summary;
+  root.append(card('Health check', s.healthy ? 'No problems found.' : 'Fix the red items first.', controls,
+    h('div', {class: 'check-list'}, health.checks.map((c) => h('div', {class: 'check-item'}, chip(LABEL[c.status], KIND[c.status]),
+      h('div', {}, h('b', {}, c.title), c.detail ? h('div', {class: 'detail'}, c.detail) : null, c.fix ? h('div', {class: 'fix'}, c.fix) : null))))));
+}
+
+// ------------------------------------------------------------------------------------------------ start
+$('#save').addEventListener('click', save);
+$('#discard').addEventListener('click', discard);
+$('#quit').addEventListener('click', async () => {
+  const ok = await confirmDialog({title: 'Stop the setup page?', body: [h('p', {}, 'Your settings are saved. Daily runs (if you turned them on) keep working without this page.')], ok: 'Quit', danger: true});
+  if (!ok) return;
+  try { await api('/api/shutdown', {}); }
+  catch (e) {
+    if (e.status) { toast(e.message, 'warn'); return; }          // answered "not yet": a run is still finishing its profile
+    /* no answer at all: the server is already going away */
+  }
+  document.body.replaceChildren(h('main', {}, card('Connecto has stopped', 'You can close this tab. Run `connecto ui` to open the page again.')));
+});
+window.addEventListener('beforeunload', (e) => { if (dirty) { e.preventDefault(); e.returnValue = ''; } });
+(async () => {
+  try {
+    await refreshState();
+    if (!S.config.me.first_name && !S.has_config) tab = 'start';
+    render();
+  } catch (e) {
+    document.body.replaceChildren(h('main', {}, card('Cannot load', e.message)));
+  }
+})();
+})();
+</script>
+</body>
+</html>

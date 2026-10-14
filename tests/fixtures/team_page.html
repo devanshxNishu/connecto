@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Our Team | Finlo</title>
+<style>.team-card { display: flex } /* Jane Style */</style>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {"@type": "Organization", "name": "Finlo", "url": "https://finlo.example",
+     "sameAs": ["https://www.linkedin.com/company/finlo/"],
+     "founder": {"@type": "Person", "name": "Asha Verma", "jobTitle": "Co-founder and CEO",
+                 "sameAs": "https://www.linkedin.com/in/asha-verma-1a2b3c"}},
+    {"@type": "Person", "name": "Tara Bose", "jobTitle": "Principal Designer",
+     "worksFor": {"@type": "Organization", "name": "Quill"},
+     "sameAs": ["https://twitter.com/tarabose", "https://in.linkedin.com/in/tara-bose-9s8t7u?trk=jsonld"]}
+  ]
+}
+</script>
+<script type="application/ld+json">{ this is not valid json </script>
+</head>
+<body>
+<header>
+  <nav>
+    <a href="/">Home</a>
+    <a href="/team">Team</a>
+    <a href="https://www.linkedin.com/company/finlo/">Finlo on LinkedIn</a>
+    <a href="https://www.linkedin.com/sharing/share-offsite/?url=https%3A%2F%2Ffinlo.example%2Fteam">Share</a>
+    <a href="mailto:hello@finlo.example">Email us</a>
+    <a href="javascript:void(0)">Menu</a>
+  </nav>
+</header>
+
+<main>
+  <h1>Meet the Team</h1>
+
+  <section class="leadership">
+    <h2>Leadership</h2>
+    <div class="team-grid">
+
+      <!-- 1. icon-only LinkedIn link, name in a heading, role in a paragraph -->
+      <div class="team-card">
+        <img src="asha.jpg" alt="">
+        <div class="team-card__body">
+          <h3>Asha Verma</h3>
+          <p class="role">Co-founder &amp; CEO</p>
+          <p class="bio">Asha spent eight years building payments products across India and Southeast Asia before starting Finlo to make marketplace payouts instant.</p>
+          <div class="social">
+            <a href="https://www.linkedin.com/in/asha-verma-1a2b3c/" aria-label="LinkedIn" target="_blank"><svg width="16" height="16"><path d="M0 0h16v16H0z"/></svg></a>
+            <a href="https://twitter.com/ashaverma" aria-label="Twitter"><svg width="16" height="16"></svg></a>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. same person again (mobile layout): must be de-duplicated -->
+      <div class="team-card team-card--mobile">
+        <h4>Asha Verma</h4>
+        <a href="https://linkedin.com/in/asha-verma-1a2b3c?utm_source=mobile"><i class="fa fa-linkedin"></i></a>
+      </div>
+
+      <!-- 3. link text is the generic word "LinkedIn"; the name sits in a class="...name" element -->
+      <div class="team-card">
+        <div class="member">
+          <strong class="member__name">Ravi Kulkarni</strong>
+          <span class="member__role">CTO at Finlo | ex-Razorpay</span>
+          <a href="https://www.linkedin.com/in/ravi-kulkarni-9z8y7x">LinkedIn</a>
+        </div>
+      </div>
+
+      <!-- 4. no visible name at all: the aria-label carries it; the role reads "Title @ Company" -->
+      <div class="team-card">
+        <a class="icon" href="https://www.linkedin.com/in/meera-iyer-4d5e6f/" aria-label="Meera Iyer on LinkedIn"><i class="fa fa-linkedin"></i></a>
+        <span>Design Lead @ PayNest</span>
+      </div>
+
+      <!-- 5. only a title attribute names the person -->
+      <div class="team-card">
+        <a href="https://www.linkedin.com/in/karan-malhotra-7g8h9i/" title="Karan Malhotra"><svg></svg></a>
+        <p>Founder at Lumen Labs</p>
+      </div>
+
+      <!-- 6. avatar image link whose alt text names the person -->
+      <div class="team-card">
+        <a href="https://www.linkedin.com/in/priya-nair-0j1k2l/"><img src="priya.jpg" alt="Priya Nair"></a>
+        <p>UX Researcher</p>
+      </div>
+
+      <!-- 7. a dr. with credentials, and an old-style /pub/ URL -->
+      <div class="team-card">
+        <h3>Dr. Maya Okafor-Lind, PhD</h3>
+        <p>Chief Scientist</p>
+        <a href="https://www.linkedin.com/pub/maya-okafor-lind/1a/2b3/4c5"><svg></svg></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="advisors">
+    <h2>Advisors</h2>
+    <ul>
+      <!-- 8. link text is the name; the role follows it as plain text -->
+      <li><a href="https://www.linkedin.com/in/sana-sheikh-6p7q8r?trk=public_profile">Sana Sheikh</a> &ndash; Design Manager at Cedar</li>
+      <!-- 9. a person without a LinkedIn link sits between two who have one -->
+      <li>Omar Farouk, Angel Investor</li>
+      <li><a href="https://www.linkedin.com/in/lakshmi-rao-2y1z0a/">Lakshmi Rao</a>, Partner at Seed Fund</li>
+    </ul>
+  </section>
+
+  <section class="press">
+    <h2>In the press</h2>
+    <p>Read the <a href="https://www.linkedin.com/pulse/finlo-raises-seed-xyz">announcement on LinkedIn</a>.</p>
+  </section>
+</main>
+
+<footer>
+  <h2>Follow us</h2>
+  <!-- 10. a personal link with no name anywhere near it: skipped and counted -->
+  <a href="https://www.linkedin.com/in/some-founder-0z9y8x/">LinkedIn</a>
+  <a href="https://twitter.com/finlo">Twitter</a>
+</footer>
+</body>
+</html>

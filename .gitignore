@@ -1,0 +1,21 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+build/
+dist/
+
+# local data (config, keys, database, browser session) lives in ~/.connecto by default; if you point CONNECTO_HOME
+# inside the repo, none of it is ever committed
+.connecto/
+connecto-home/
+.env
+config.yaml
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+browser/
+
+# Your own files (settings, plans, the first version): never committed, never published
+private/

@@ -1,0 +1,22 @@
+# Founders of recent fintech startups in India, from the public Y Combinator directory.
+#
+# How to use an example: see examples/README.md. Replace the three `me:` lines with your own, then
+#   connecto config check      (does the file make sense?)
+#   connecto fetch             (collect the people)
+#   connecto preview           (who is waiting and what each note would say - sends nothing)
+me:
+  first_name: Asha
+  about: "a product designer in Pune"      # one short line about you
+  project: ""                              # optional: what you are building or looking for
+
+sources:
+  - type: yc
+    batches: [S26, F26]                    # empty means every batch
+    industries: [fintech]                  # the words YC itself uses on ycombinator.com/companies
+    regions: [India]
+
+targets:
+  exclude_titles: [recruiter, intern]
+
+message:
+  plan: free                               # free = 200 characters per note, premium = 300
