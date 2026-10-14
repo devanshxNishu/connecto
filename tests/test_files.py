@@ -66,6 +66,21 @@ def test_a_folder_is_refused(tmp_path):
         read_regular_file(tmp_path, 1000, what="CSV file")
 
 
+def test_a_folder_is_called_a_folder_where_it_cannot_be_opened_at_all(tmp_path, monkeypatch):
+    real_open = os.open
+
+    def like_windows(path, flags, *rest):              # Windows answers "permission denied" for a folder
+        if os.path.isdir(path):
+            raise PermissionError(13, "Permission denied", str(path))
+        return real_open(path, flags, *rest)
+
+    monkeypatch.setattr(os, "open", like_windows)
+    with pytest.raises(ValueError, match="is a folder, not a CSV file"):
+        read_regular_file(tmp_path, 1000, what="CSV file")
+    with pytest.raises(FileNotFoundError):              # anything else that cannot be opened is still that error
+        read_regular_file(tmp_path / "missing.csv", 1000)
+
+
 def test_a_named_pipe_is_refused_not_waited_for(tmp_path):
     fifo = tmp_path / "people.csv"
     os.mkfifo(fifo)

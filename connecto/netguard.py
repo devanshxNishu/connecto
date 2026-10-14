@@ -81,6 +81,43 @@ def blocked_address(text) -> bool:
     return any(ip in net for net in blocked) or not ip.is_global
 
 
+def _ipv4_number(part: str) -> int | None:
+    """One part of an address written as numbers: decimal, ``0x`` hexadecimal or ``0`` octal; None if it is not one."""
+    if not part:
+        return None
+    base = 10
+    if part[:2].lower() == "0x":
+        base, part = 16, part[2:]
+    elif len(part) > 1 and part[0] == "0":
+        base, part = 8, part[1:]
+    if not part:
+        return 0
+    if any(c not in "0123456789abcdef"[:base] for c in part.lower()):
+        return None
+    return int(part, base)
+
+
+def numeric_host(host: str) -> str | None:
+    """The IPv4 address a browser reads in a host written as numbers - ``2130706433``, ``0x7f.1``, ``127.1``,
+    ``0177.0.0.1`` all mean 127.0.0.1 - in its usual dotted form; None for a host that is not written that way.
+
+    This is the IPv4 parser of the WHATWG URL standard. Left to the system, these forms are read as addresses on Linux and
+    macOS but looked up as names on Windows, so the guard reads them itself, the same way everywhere."""
+    parts = host.split(".")
+    if len(parts) > 1 and parts[-1] == "":
+        parts.pop()                                            # (one dot at the end is allowed: "127.0.0.1.")
+    last = parts[-1]
+    if not (last.isascii() and last.isdigit()) and _ipv4_number(last) is None:
+        return None                                            # it does not end in a number: a name
+    numbers = [_ipv4_number(p) for p in parts]                 # (each at most 63 characters: the IDNA check came first)
+    if len(numbers) > 4 or None in numbers:
+        return None
+    if any(n > 255 for n in numbers[:-1]) or numbers[-1] >= 256 ** (5 - len(numbers)):
+        return None
+    value = numbers[-1] + sum(n * 256 ** (3 - i) for i, n in enumerate(numbers[:-1]))
+    return str(ipaddress.IPv4Address(value))
+
+
 def resolve(host: str, port: int | None = None) -> list[str]:
     """Every address ``host`` has, in the order the system prefers them (tests replace this)."""
     found: list[str] = []
@@ -114,8 +151,9 @@ def check_url(url, allow_private: bool = False, resolver: Resolver | None = None
     """The checked target for ``url``, or ``Refused`` / ``FetchError`` with the reason.
 
     http/https only, no credentials in the URL, and - unless ``allow_private`` - the host must resolve only to public
-    addresses. Names are looked up here, so ``localhost``, ``0x7f.1``, ``2130706433`` and names that point at 10.x, 192.168.x
-    or 169.254.x are all caught; the connection later goes to these very addresses and not to the name.
+    addresses. A host written as numbers (``2130706433``, ``0x7f.1``) is read as the address a browser reads there, and
+    names are looked up here, so ``localhost`` and names that point at 10.x, 192.168.x or 169.254.x are all caught; the
+    connection later goes to these very addresses and not to the name.
     """
     text = str(url or "").strip()
     if not text or len(text) > MAX_URL_CHARS or any(ord(c) < 33 or ord(c) == 127 for c in text):
@@ -138,6 +176,7 @@ def check_url(url, allow_private: bool = False, resolver: Resolver | None = None
     except UnicodeError:
         raise Refused("not a valid URL (the host name is not valid)") from None
     port = port or (443 if scheme == "https" else 80)
+    wire_host = numeric_host(wire_host) or wire_host            # 2130706433, 0x7f.1: the address, as a browser reads it
     try:
         addresses = list((resolver or resolve)(wire_host, port))
     except OSError as exc:

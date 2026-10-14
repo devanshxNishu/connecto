@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import gzip
 import ipaddress
+import re
 import shutil
 import socket
 import ssl
@@ -277,6 +278,29 @@ def test_an_internal_address_is_refused_unless_allowed_and_a_failed_lookup_is_no
         with pytest.raises(FetchError, match="cannot look up") as caught:
             netguard.check_url("https://empty.test/", resolver=resolver)
         assert not isinstance(caught.value, Refused)                      # (a DNS hiccup may pass; a refusal never will)
+
+
+@pytest.mark.parametrize("host,address", [("2130706433", "127.0.0.1"), ("0x7f.1", "127.0.0.1"), ("127.1", "127.0.0.1"),
+                                          ("0177.0.0.1", "127.0.0.1"), ("0xa9.0xfe.0xa9.0xfe", "169.254.169.254"),
+                                          ("3232235777", "192.168.1.1"), ("127.0.0.1.", "127.0.0.1")])
+def test_a_host_written_as_numbers_is_read_as_the_address_a_browser_reads_on_every_system(host, address):
+    asked = []
+
+    def like_windows(name, port=None):                  # only the usual dotted form is an address; the rest is looked up
+        asked.append(name)
+        if name.count(".") == 3 and all(part.isdigit() for part in name.split(".")):
+            return [name]
+        raise OSError("no such host")
+
+    with pytest.raises(Refused, match=rf"private or internal address \({re.escape(address)}\)"):
+        netguard.check_url(f"http://{host}/", resolver=like_windows)
+    assert asked == [address]
+
+
+def test_only_a_host_that_is_all_numbers_is_read_as_an_address():
+    assert netguard.numeric_host("1572395042") == "93.184.216.34" and netguard.numeric_host("0x") == "0.0.0.0"
+    for name in ("example.com", "example.123", "1.2.3.4.5", "1.2.3.256", "4294967296", "08", "::1", "localhost", "0x7g"):
+        assert netguard.numeric_host(name) is None, name
 
 
 def test_refused_is_a_fetch_error_is_a_value_error():
@@ -771,7 +795,13 @@ def test_the_watchdog_hangs_up_on_a_socket_it_learns_about_too_late():
     try:
         dog.watch(a)                                   # (the time was up before this socket existed)
         a.settimeout(2)
-        assert a.recv(10) == b""                        # shut down: reads end at once
+        try:
+            ended = a.recv(10) == b""                   # shut down: reads end at once
+        except TimeoutError:
+            ended = False
+        except OSError:
+            ended = True                                # (Windows answers a read on a shut-down socket with an error)
+        assert ended
     finally:
         a.close()
         b.close()

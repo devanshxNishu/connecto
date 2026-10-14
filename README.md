@@ -268,7 +268,7 @@ Every change goes through a test suite that never touches the real internet or a
 
 | Check | What it covers | Result |
 |---|---|---|
-| Offline tests | Settings, limits, the note engine, every source, the AI client and its filter, the setup page's security, the schedulers, hostile input (huge, broken or booby-trapped files and pages) | 2,548 passing on Python 3.10, 3.12 and 3.13 |
+| Offline tests | Settings, limits, the note engine, every source, the AI client and its filter, the setup page's security, the schedulers, hostile input (huge, broken or booby-trapped files and pages) | 2,557 passing on Python 3.10, 3.12 and 3.13 |
 | Browser tests | A real Chromium against stand-in LinkedIn pages: open a profile, *Connect*, add the note, *Send*, and stop at a check or a warning; the setup page; the browser-based sources | 139 passing |
 | Safety rules broken on purpose | A check is removed or flipped and a test must fail (mutation testing): the send engine and its stop rules, privacy, the network guard, file handling, settings migration, the run lock, the store | 91 of 97 caught |
 | The real YC directory | The YC source read live, without touching LinkedIn: 6,297 companies listed; notes written for 75 real founders from two batches, all within the 300 characters of a Premium note | passed |

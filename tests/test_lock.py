@@ -16,6 +16,8 @@ import pytest
 from connecto import lock as lock_module
 from connecto.lock import LockHeld, LockUnavailable, RunLock
 
+from helpers import deletes_an_open_file, refuse_file_locks
+
 ROOT = Path(__file__).resolve().parent.parent
 
 HOLDER = """
@@ -187,6 +189,7 @@ def test_asking_who_holds_a_lock_that_does_not_exist_creates_nothing(path):
 
 
 # ----------------------------------------------------------------------------- somebody tidies the folder
+@deletes_an_open_file
 def test_a_lock_whose_file_is_deleted_is_lost_and_says_so_straight_away(path):
     with RunLock(path) as lock:
         assert not lock.lost
@@ -195,6 +198,7 @@ def test_a_lock_whose_file_is_deleted_is_lost_and_says_so_straight_away(path):
         assert lock.lost                   # and it stays lost
 
 
+@deletes_an_open_file
 def test_a_lock_that_was_seen_to_be_lost_stays_lost_even_if_the_file_comes_back(path):
     """The run has been told to stop; it must not be told otherwise because somebody put the file back."""
     with RunLock(path) as lock:
@@ -205,6 +209,7 @@ def test_a_lock_that_was_seen_to_be_lost_stays_lost_even_if_the_file_comes_back(
         assert lock.lost
 
 
+@deletes_an_open_file
 def test_a_lock_whose_file_is_replaced_is_lost(path):
     with RunLock(path) as lock:
         other = path.parent / "other"
@@ -213,6 +218,7 @@ def test_a_lock_whose_file_is_replaced_is_lost(path):
         assert lock.lost
 
 
+@deletes_an_open_file
 def test_a_lock_whose_file_is_replaced_by_an_exact_copy_is_lost_too(path):
     """Same text, same token - but a different file, which is not the one that is locked."""
     with RunLock(path) as lock:
@@ -233,6 +239,7 @@ def test_a_lock_that_was_never_taken_is_not_lost(path):
     assert RunLock(path).lost is False
 
 
+@deletes_an_open_file
 def test_a_run_that_began_after_the_file_was_deleted_cannot_be_overtaken_by_the_old_one_releasing(path):
     """The first run's release() must not delete or unlock the second run's lock: only what it holds is touched."""
     first = RunLock(path).acquire()
@@ -247,6 +254,7 @@ def test_a_run_that_began_after_the_file_was_deleted_cannot_be_overtaken_by_the_
     second.release()
 
 
+@deletes_an_open_file
 def test_a_file_that_vanishes_between_the_open_and_the_lock_is_opened_again(path, monkeypatch):
     real, calls = lock_module._try_lock, []
 
@@ -268,10 +276,7 @@ def test_a_file_system_without_file_locks_is_reported_and_leaks_nothing(path, mo
     monkeypatch.setattr(os, "open", lambda *a, **k: opened.append(real_open(*a, **k)) or opened[-1])
     monkeypatch.setattr(os, "close", lambda fd: (opened.remove(fd) if fd in opened else None, real_close(fd))[1])
 
-    def refuse(fd, how):
-        raise OSError(errno.ENOLCK, "No locks available")
-
-    monkeypatch.setattr(lock_module.fcntl, "flock", refuse)
+    refuse_file_locks(monkeypatch)
     with pytest.raises(LockUnavailable) as caught:
         RunLock(path).acquire()
     assert "locks" in str(caught.value) and "CONNECTO_HOME" in str(caught.value)
