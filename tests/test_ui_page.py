@@ -229,6 +229,24 @@ def test_a_source_can_be_switched_off_without_losing_its_settings(open_ui):
     assert source["enabled"] is False and source["batches"] == ["S26"]
 
 
+def test_a_preview_asked_for_while_the_page_reloads_after_adding_people_is_kept(open_ui):
+    ui = open_ui(READY)
+    page = ui.page
+    tab(page, "People")
+    held = []
+    page.route("**/api/state", lambda route: held.append(route))             # the reload after adding is held back ...
+    page.fill("textarea[aria-label='People to add']", "Jane Doe, Acme Pay, CEO, https://www.linkedin.com/in/jane-doe-1a2b3c/")
+    page.get_by_role("button", name="Add these people").click()
+    expect(page.locator("#toasts")).to_contain_text("Added 1 person")
+    page.get_by_role("button", name="Show who would be invited").click()
+    expect(page.locator("table")).to_contain_text("Jane Doe")                # ... so the preview arrives first (as on a slow machine)
+    assert len(held) == 1
+    held[0].continue_()
+    page.unroute("**/api/state")
+    expect(page.locator("#chips")).to_contain_text("1 person waiting")       # the reload has landed and the page is redrawn
+    expect(page.locator("table")).to_contain_text("Jane Doe")
+
+
 def test_adding_people_by_hand_and_previewing_who_would_be_invited(open_ui):
     ui = open_ui(READY)
     page = ui.page

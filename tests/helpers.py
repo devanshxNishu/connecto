@@ -2,6 +2,10 @@
 from __future__ import annotations
 
 import copy
+import errno
+import sys
+
+import pytest
 
 from connecto import config
 from connecto.limits import Limits
@@ -44,3 +48,22 @@ def person(slug: str, name: str | None = None, **fields) -> dict:
 def add_people(home: Home, people: list[dict], source_type: str = "manual", source_id: str = "manual") -> None:
     with Store(home.db_path) as st:
         st.upsert_people(people, source_type, source_id)
+
+
+# Windows does not let anybody delete, rename or replace a file that a program has open, so there a run's lock file cannot
+# be taken away from under it. The tests that do exactly that to check what a run makes of it only apply elsewhere.
+deletes_an_open_file = pytest.mark.skipif(sys.platform == "win32",
+                                          reason="Windows refuses to delete or replace a file that is open")
+
+
+def refuse_file_locks(monkeypatch) -> None:
+    """Make the run lock meet a file system without file locks, whichever kind of lock this system uses."""
+    from connecto import lock as lock_module
+
+    def refuse(*_):
+        raise OSError(errno.ENOLCK, "No locks available")
+
+    if lock_module.fcntl is not None:
+        monkeypatch.setattr(lock_module.fcntl, "flock", refuse)
+    else:                                                       # Windows
+        monkeypatch.setattr(lock_module.msvcrt, "locking", refuse)

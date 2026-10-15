@@ -14,7 +14,7 @@ import shutil
 import subprocess
 import sys
 import types
-from pathlib import Path, PureWindowsPath
+from pathlib import Path, PurePosixPath, PureWindowsPath
 
 import pytest
 
@@ -179,7 +179,7 @@ def windows_home(root=r"C:\Users\Alex Smith\.connecto"):
 
 
 def posix_home(root="/home/alex/.connecto"):
-    p = Path(root)
+    p = PurePosixPath(root)                      # (cron is Linux's: its paths are written the Linux way on every system)
     return types.SimpleNamespace(root=p, logs_dir=p / "logs")
 
 
@@ -213,7 +213,7 @@ def test_parse_times_rejects_bad_input(spec):
 def test_command_is_the_scheduled_run(home):
     assert command(home, PY) == [PY, "-m", "connecto", "--home", str(home.root), "run", "--scheduled"]
     assert command(home)[0] == sys.executable                      # default: the interpreter running Connecto
-    assert command(home, Path("/opt/venv/bin/python"))[0] == "/opt/venv/bin/python"
+    assert command(home, PurePosixPath("/opt/venv/bin/python"))[0] == "/opt/venv/bin/python"   # (a path is fine too)
 
 
 # ----------------------------------------------------------------------------- launchd
