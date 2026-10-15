@@ -640,7 +640,14 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     _console_safe()
     parser = build_parser()
-    args = parser.parse_args(argv)
+    args, extra = parser.parse_known_args(argv)
+    if extra:
+        # Before Python 3.13, argparse leaves words that come after an option between two positionals unparsed:
+        # in `connecto ai suggest --apply founders of fintech` they belong to the description, nothing else does.
+        if getattr(args, "command", None) == "ai" and not any(e.startswith("-") for e in extra):
+            args.text = [*(args.text or []), *extra]
+        else:
+            parser.error("unrecognized arguments: " + " ".join(extra))
     if not getattr(args, "func", None):
         home = Home(args.home)
         print(f"Connecto {__version__} - a careful, local-first networking assistant.\n")
