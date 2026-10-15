@@ -687,3 +687,11 @@ def test_the_setup_page_command_hands_over_to_the_server(tool, home, monkeypatch
     assert seen == {"home": home.root.resolve(), "port": 8123, "open": False}
     tool("ui")
     assert seen["port"] == 0 and seen["open"] is True
+
+
+def test_words_and_options_that_belong_to_no_command_are_still_refused(tmp_path):
+    """(``ai suggest`` takes the words argparse leaves over before Python 3.13; nothing else may.)"""
+    for argv in (["run", "stray"], ["ai", "suggest", "--bogus"], ["ai", "key", "stray", "--nope"], ["doctor", "--nope"]):
+        with pytest.raises(SystemExit) as exc:
+            cli.main([*argv, "--home", str(tmp_path / "home")])
+        assert exc.value.code == 2, argv

@@ -14,6 +14,16 @@ PROXY_VARIABLES = ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "http
 CHROMIUM_OFFLINE = ["--no-proxy-server", "--host-resolver-rules=MAP * ~NOTFOUND , EXCLUDE 127.0.0.1 , EXCLUDE localhost"]
 
 
+def pytest_make_parametrize_id(config, val, argname):
+    """A long input gets a short name in the test's ID: its start and its length. pytest puts the ID in an environment
+    variable, which Windows refuses beyond 32,767 characters (a test fed 200,000 brackets could not even start there), and a
+    report that repeats such an input is unreadable anyway."""
+    if isinstance(val, (str, bytes)) and len(val) > 60:
+        start = val[:12].decode("latin-1") if isinstance(val, bytes) else val[:12]
+        return f"{start.encode('unicode_escape').decode('ascii')}...{len(val)}"
+    return None
+
+
 def _is_local(host) -> bool:
     host = str(host or "").strip("[]").lower()
     return host in LOCAL_HOSTS or host.endswith(".localhost")

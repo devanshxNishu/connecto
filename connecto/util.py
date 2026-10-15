@@ -72,7 +72,12 @@ def read_regular_file(path: str | os.PathLike, max_bytes: int, *, what: str = "f
     opened."""
     p = Path(path)
     flags = os.O_RDONLY | getattr(os, "O_NONBLOCK", 0) | getattr(os, "O_BINARY", 0) | getattr(os, "O_CLOEXEC", 0)
-    fd = os.open(p, flags)                                  # (O_NONBLOCK: opening a pipe must not wait for a writer)
+    try:
+        fd = os.open(p, flags)                              # (O_NONBLOCK: opening a pipe must not wait for a writer)
+    except OSError:
+        if p.is_dir():                                      # (Windows cannot open a folder this way: "permission denied")
+            raise ValueError(f"{p.name} is a folder, not a {what}") from None
+        raise
     try:
         info = os.fstat(fd)
         if stat.S_ISDIR(info.st_mode):
