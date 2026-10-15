@@ -341,13 +341,18 @@ def impatient(home, clean_env, monkeypatch):
 
 
 def _talk(port: int, data: bytes, wait: float = 5.0) -> bytes:
-    """Send ``data`` and then say nothing; return what the server sent before it closed (or b'<still open>')."""
+    """Send ``data`` and then say nothing; return all the server sent before it closed (b'<still open>' added if it did not).
+
+    An answer can come in more than one piece (the headers, then the body), so this reads until the server hangs up."""
+    received = b""
     with socket.create_connection(("127.0.0.1", port), timeout=wait) as sock:
         sock.sendall(data)
         try:
-            return sock.recv(4096)
+            while piece := sock.recv(4096):
+                received += piece
         except socket.timeout:
-            return b"<still open>"
+            return received + b"<still open>"
+    return received
 
 
 def test_the_idle_time_is_fifteen_seconds():
