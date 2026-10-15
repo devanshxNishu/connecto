@@ -645,13 +645,14 @@ function handCard() {
       try {
         const r = await api('/api/people/add', {text: add.value});
         add.value = '';
+        preview = null;                   // (now, not after the reload below: a preview asked for meanwhile is newer and stays)
         toast(`Added ${plural(r.added, 'person', 'people')}.` + (r.nameless ? ` ${plural(r.nameless, 'has', 'have')} no name, so a plain invitation.` : '') + (r.problems.length ? ' ' + r.problems[0] : ''), 'ok');
-        await refreshState(); preview = null; render();
+        await refreshState(); render();
       } catch (e) { toast(e.message, 'bad'); }
     }, 'primary')),
     h('details', {}, h('summary', {}, 'Never contact these people'),
       h('div', {class: 'grid2'}, skip, h('div', {class: 'row'}, button('Never contact', async () => {
-        try { const r = await api('/api/people/skip', {text: skip.value}); toast(`Will never contact ${plural(r.skipped, 'person', 'people')}.`, 'ok'); skip.value = ''; await refreshState(); preview = null; render(); }
+        try { const r = await api('/api/people/skip', {text: skip.value}); preview = null; toast(`Will never contact ${plural(r.skipped, 'person', 'people')}.`, 'ok'); skip.value = ''; await refreshState(); render(); }
         catch (e) { toast(e.message, 'bad'); }
       })))));
 }

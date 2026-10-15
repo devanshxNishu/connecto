@@ -13,7 +13,7 @@ from connecto.lock import RunLock
 from connecto.runner import EXIT_BUSY, EXIT_CONFIG, EXIT_NEEDS_YOU, EXIT_OK, RunOptions
 from connecto.store import Store
 
-from helpers import FAST, add_people, make_cfg, make_home, person
+from helpers import FAST, add_people, deletes_an_open_file, make_cfg, make_home, person, refuse_file_locks
 
 
 @pytest.fixture()
@@ -221,6 +221,7 @@ def test_run_fetch_backs_off_when_another_fetch_is_running(home, tmp_path):
     assert res.exit_code == EXIT_BUSY
 
 
+@deletes_an_open_file
 def test_a_fetch_is_told_to_stop_when_its_lock_file_goes_away_or_the_person_says_stop(home, monkeypatch):
     seen = {}
 
@@ -239,6 +240,7 @@ def test_a_fetch_is_told_to_stop_when_its_lock_file_goes_away_or_the_person_says
     assert seen["before"] is True
 
 
+@deletes_an_open_file
 def test_a_fetch_that_uses_the_browser_is_told_to_stop_when_the_run_lock_goes_away(home, monkeypatch):
     seen = {}
 
@@ -254,9 +256,7 @@ def test_a_fetch_that_uses_the_browser_is_told_to_stop_when_the_run_lock_goes_aw
 
 
 def test_a_fetch_in_a_folder_that_cannot_be_locked_says_so(home, monkeypatch):
-    import errno
-    from connecto import lock as lock_module
-    monkeypatch.setattr(lock_module.fcntl, "flock", lambda fd, how: (_ for _ in ()).throw(OSError(errno.ENOLCK, "No locks")))
+    refuse_file_locks(monkeypatch)
     logs: list[str] = []
     res = runner.run_fetch(home, make_cfg(sources=[{"type": "csv", "path": "leads.csv"}]), log=logs.append)
     assert res.exit_code == EXIT_CONFIG and "cannot be locked" in res.stop_reason and "CONNECTO_HOME" in "\n".join(logs)
@@ -265,9 +265,7 @@ def test_a_fetch_in_a_folder_that_cannot_be_locked_says_so(home, monkeypatch):
 
 
 def test_login_in_a_folder_that_cannot_be_locked_exits_with_a_settings_problem(home, monkeypatch):
-    import errno
-    from connecto import lock as lock_module
-    monkeypatch.setattr(lock_module.fcntl, "flock", lambda fd, how: (_ for _ in ()).throw(OSError(errno.ENOLCK, "No locks")))
+    refuse_file_locks(monkeypatch)
     monkeypatch.setattr(runner, "launch_browser", lambda *a, **k: pytest.fail("no browser without the lock"))
     logs: list[str] = []
     assert runner.login(home, make_cfg(), log=logs.append) == EXIT_CONFIG and "CONNECTO_HOME" in "\n".join(logs)
