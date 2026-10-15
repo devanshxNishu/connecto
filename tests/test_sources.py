@@ -628,6 +628,7 @@ def test_csv_source_resolves_paths_and_reports_problems(env, tmp_path, monkeypat
     assert (again[0].added, again[0].updated, again[0].seen) == (0, 0, 3)               # idempotent
 
     monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("USERPROFILE", str(tmp_path))                                    # (where Windows finds "~")
     (tmp_path / "mine.csv").write_text("Name,URL\nIvy Lu,linkedin.com/in/ivy-lu\n")
     src = build_source({"type": "csv", "path": "~/mine.csv"}, env.ctx())
     assert src.resolve_path() == tmp_path / "mine.csv" and src.source_id == "csv:mine.csv"

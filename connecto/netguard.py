@@ -81,6 +81,43 @@ def blocked_address(text) -> bool:
     return any(ip in net for net in blocked) or not ip.is_global
 
 
+def _ipv4_number(part: str) -> int | None:
+    """One part of an address written as numbers: decimal, ``0x`` hexadecimal or ``0`` octal; None if it is not one."""
+    if not part:
+        return None
+    base = 10
+    if part[:2].lower() == "0x":
+        base, part = 16, part[2:]
+    elif len(part) > 1 and part[0] == "0":
+        base, part = 8, part[1:]
+    if not part:
+        return 0
+    if any(c not in "0123456789abcdef"[:base] for c in part.lower()):
+        return None
+    return int(part, base)
+
+
+def numeric_host(host: str) -> str | None:
+    """The IPv4 address a browser reads in a host written as numbers - ``2130706433``, ``0x7f.1``, ``127.1``,
+    ``0177.0.0.1`` all mean 127.0.0.1 - in its usual dotted form; None for a host that is not written that way.
+
+    This is the IPv4 parser of the WHATWG URL standard. Left to the system, these forms are read as addresses on Linux and
+    macOS but looked up as names on Windows, so the guard reads them itself, the same way everywhere."""
+    parts = host.split(".")
+    if len(parts) > 1 and parts[-1] == "":
+        parts.pop()                                            # (one dot at the end is allowed: "127.0.0.1.")
+    last = parts[-1]
+    if not (last.isascii() and last.isdigit()) and _ipv4_number(last) is None:
+        return None                                            # it does not end in a number: a name
+    numbers = [_ipv4_number(p) for p in parts]                 # (each at most 63 characters: the IDNA check came first)
+    if len(numbers) > 4 or None in numbers:
+        return None
+    if any(n > 255 for n in numbers[:-1]) or numbers[-1] >= 256 ** (5 - len(numbers)):
+        return None
+    value = numbers[-1] + sum(n * 256 ** (3 - i) for i, n in enumerate(numbers[:-1]))
+    return str(ipaddress.IPv4Address(value))
+
+
 def resolve(host: str, port: int | None = None) -> list[str]:
     """Every address ``host`` has, in the order the system prefers them (tests replace this)."""
     found: list[str] = []
@@ -114,8 +151,9 @@ def check_url(url, allow_private: bool = False, resolver: Resolver | None = None
     """The checked target for ``url``, or ``Refused`` / ``FetchError`` with the reason.
 
     http/https only, no credentials in the URL, and - unless ``allow_private`` - the host must resolve only to public
-    addresses. Names are looked up here, so ``localhost``, ``0x7f.1``, ``2130706433`` and names that point at 10.x, 192.168.x
-    or 169.254.x are all caught; the connection later goes to these very addresses and not to the name.
+    addresses. A host written as numbers (``2130706433``, ``0x7f.1``) is read as the address a browser reads there, and
+    names are looked up here, so ``localhost`` and names that point at 10.x, 192.168.x or 169.254.x are all caught; the
+    connection later goes to these very addresses and not to the name.
     """
     text = str(url or "").strip()
     if not text or len(text) > MAX_URL_CHARS or any(ord(c) < 33 or ord(c) == 127 for c in text):
@@ -138,6 +176,7 @@ def check_url(url, allow_private: bool = False, resolver: Resolver | None = None
     except UnicodeError:
         raise Refused("not a valid URL (the host name is not valid)") from None
     port = port or (443 if scheme == "https" else 80)
+    wire_host = numeric_host(wire_host) or wire_host            # 2130706433, 0x7f.1: the address, as a browser reads it
     try:
         addresses = list((resolver or resolve)(wire_host, port))
     except OSError as exc:
@@ -178,9 +217,14 @@ def _open(addresses, port: int, timeout: float, deadline: float) -> socket.socke
         if left <= 0:
             break
         try:
-            return _connect(ip, port, min(timeout, left))
+            sock = _connect(ip, port, min(timeout, left))
         except OSError as exc:
             error = exc
+            continue
+        # From here on the socket's timeout is the read timeout only. The time limit for the whole download is the
+        # watchdog's: a socket timeout cut to the time left would end at the same moment and give the wrong explanation.
+        sock.settimeout(timeout)
+        return sock
     raise error or TimeoutError("ran out of time before a connection could be made")
 
 
@@ -189,6 +233,10 @@ def _tls_context() -> ssl.SSLContext:
     """The usual checks (certificate chain and host name); the system's certificates, plus the ones ``certifi`` brings
     (a Python installed from python.org on a Mac has none of its own)."""
     context = ssl.create_default_context()
+    # Never older than TLS 1.2, whatever this Python's or this system's defaults say (some builds report "minimum
+    # supported" and leave the floor to the system's OpenSSL settings).
+    if context.minimum_version != ssl.TLSVersion.MAXIMUM_SUPPORTED and context.minimum_version < ssl.TLSVersion.TLSv1_2:
+        context.minimum_version = ssl.TLSVersion.TLSv1_2
     try:
         import certifi
 
@@ -205,6 +253,7 @@ class _Watchdog:
 
     def __init__(self, seconds: float):
         self.seconds = seconds
+        self.ends = time.monotonic() + seconds
         self.expired = False
         self._sock = None
         self._lock = threading.Lock()
@@ -228,6 +277,10 @@ class _Watchdog:
 
     def stop(self) -> None:
         self._timer.cancel()
+
+    def time_is_up(self) -> bool:
+        """The timer has fired, or is due to: a connection attempt cut to the time left can fail a moment before it."""
+        return self.expired or time.monotonic() >= self.ends
 
 
 def _hang_up(sock) -> None:
@@ -286,7 +339,7 @@ def _proxy_configured() -> bool:
 
 
 def _broken(exc: BaseException, dog: _Watchdog, url: str, what: str, reading: bool) -> FetchError:
-    if dog.expired:
+    if dog.time_is_up():
         return FetchError(f"{what} took more than {dog.seconds:g} seconds to download")
     name = type(exc).__name__
     if reading:
