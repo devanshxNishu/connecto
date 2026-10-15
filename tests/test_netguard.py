@@ -761,18 +761,20 @@ def test_the_time_limit_covers_the_redirects_too(raw):
 
 def test_the_addresses_are_tried_one_after_another_until_the_time_is_up(monkeypatch):
     attempts = []
+    clock = SimpleNamespace(now=0.0)
+    # Check the timeout arithmetic without depending on how promptly a busy runner wakes from sleep.
+    monkeypatch.setattr(netguard, "time", SimpleNamespace(monotonic=lambda: clock.now))
 
     def blackhole(ip, port, timeout):
         attempts.append((ip, round(timeout, 1)))
-        time.sleep(timeout)
+        clock.now += timeout
         raise TimeoutError("timed out")
 
     monkeypatch.setattr(netguard, "_connect", blackhole)
     resolver = lambda host, port=None: [f"93.184.216.{n}" for n in range(1, 6)]
-    started = time.monotonic()
     with pytest.raises(FetchError):
         netguard.get("http://a.test/", resolver=resolver, timeout=0.3, total_seconds=0.5)
-    assert time.monotonic() - started < 1.5
+    assert clock.now == pytest.approx(0.5)
     assert attempts == [("93.184.216.1", 0.3), ("93.184.216.2", 0.2)]       # the second one gets only what is left
     attempts.clear()
     with pytest.raises(FetchError):
@@ -788,23 +790,31 @@ def test_a_forgotten_watchdog_does_not_keep_the_program_from_ending():
 
 
 def test_the_watchdog_hangs_up_on_a_socket_it_learns_about_too_late():
-    dog = netguard._Watchdog(0.0)
-    time.sleep(0.2)
-    assert dog.expired
+    dog = netguard._Watchdog(600)
+    dog.stop()
+    dog._fire()                                        # expire deterministically before the socket exists
     a, b = socket.socketpair()
-    try:
-        dog.watch(a)                                   # (the time was up before this socket existed)
-        a.settimeout(2)
+    ended = []
+
+    def read():
         try:
-            ended = a.recv(10) == b""                   # shut down: reads end at once
-        except TimeoutError:
-            ended = False
+            ended.append(a.recv(10) == b"")
         except OSError:
-            ended = True                                # (Windows answers a read on a shut-down socket with an error)
-        assert ended
+            ended.append(True)                          # Windows reports a read on a shut-down socket as an error
+
+    # A timeout-mode socket waits in select() on Windows even after receive shutdown. Use a blocking reader,
+    # with a bounded join and peer cleanup so a broken watchdog still fails without leaving a stuck thread.
+    reader = threading.Thread(target=read, daemon=True)
+    try:
+        dog.watch(a)
+        reader.start()
+        reader.join(2)
+        assert ended == [True]
     finally:
-        a.close()
         b.close()
+        a.close()
+        if reader.ident is not None:
+            reader.join(5)
         dog.stop()
 
 
@@ -927,13 +937,15 @@ def certs(tmp_path_factory):
         (folder / "ca.cnf").write_text("[req]\ndistinguished_name=dn\nprompt=no\nx509_extensions=v3_ca\n[dn]\nCN=Connecto test CA\n"
                                        "[v3_ca]\nbasicConstraints=critical,CA:TRUE\nkeyUsage=critical,keyCertSign,cRLSign\n"
                                        "subjectKeyIdentifier=hash\nauthorityKeyIdentifier=keyid:always\n")
-        curve = ["-newkey", "ec", "-pkeyopt", "ec_paramgen_curve:prime256v1"]
+        # Apple's LibreSSL defaults to explicit EC parameters and SHA-1; current Python/OpenSSL refuses them.
+        curve = ["-newkey", "ec", "-pkeyopt", "ec_paramgen_curve:prime256v1",
+                 "-pkeyopt", "ec_param_enc:named_curve", "-sha256"]
         run("req", "-x509", *curve, "-nodes", "-keyout", "ca.key", "-out", "ca.pem", "-days", "2", "-config", "ca.cnf")
         for name in ("public.test", "other.test"):
             (folder / f"{name}.cnf").write_text(f"subjectAltName=DNS:{name}\nbasicConstraints=CA:FALSE\nkeyUsage=critical,digitalSignature\n"
                                                 "extendedKeyUsage=serverAuth\nsubjectKeyIdentifier=hash\nauthorityKeyIdentifier=keyid\n")
             run("req", "-new", *curve, "-nodes", "-keyout", f"{name}.key", "-out", f"{name}.csr", "-subj", f"/CN={name}")
-            run("x509", "-req", "-in", f"{name}.csr", "-CA", "ca.pem", "-CAkey", "ca.key", "-CAcreateserial", "-out", f"{name}.pem",
+            run("x509", "-req", "-sha256", "-in", f"{name}.csr", "-CA", "ca.pem", "-CAkey", "ca.key", "-CAcreateserial", "-out", f"{name}.pem",
                 "-days", "2", "-extfile", f"{name}.cnf")
     except (subprocess.SubprocessError, OSError) as exc:
         pytest.skip(f"could not make test certificates: {exc}")
