@@ -14,6 +14,10 @@ from connecto.targets import Targets
 
 @contextmanager
 def within(seconds: float = 5):
+    if not hasattr(signal, "setitimer"):          # Windows: no interrupt, the time check after the match still applies
+        yield
+        return
+
     def give_up(*_):
         raise AssertionError(f"still matching after {seconds:g} seconds")
 
