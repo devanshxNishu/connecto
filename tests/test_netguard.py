@@ -927,13 +927,15 @@ def certs(tmp_path_factory):
         (folder / "ca.cnf").write_text("[req]\ndistinguished_name=dn\nprompt=no\nx509_extensions=v3_ca\n[dn]\nCN=Connecto test CA\n"
                                        "[v3_ca]\nbasicConstraints=critical,CA:TRUE\nkeyUsage=critical,keyCertSign,cRLSign\n"
                                        "subjectKeyIdentifier=hash\nauthorityKeyIdentifier=keyid:always\n")
-        curve = ["-newkey", "ec", "-pkeyopt", "ec_paramgen_curve:prime256v1"]
+        # Apple's LibreSSL defaults to explicit EC parameters and SHA-1; current Python/OpenSSL refuses them.
+        curve = ["-newkey", "ec", "-pkeyopt", "ec_paramgen_curve:prime256v1",
+                 "-pkeyopt", "ec_param_enc:named_curve", "-sha256"]
         run("req", "-x509", *curve, "-nodes", "-keyout", "ca.key", "-out", "ca.pem", "-days", "2", "-config", "ca.cnf")
         for name in ("public.test", "other.test"):
             (folder / f"{name}.cnf").write_text(f"subjectAltName=DNS:{name}\nbasicConstraints=CA:FALSE\nkeyUsage=critical,digitalSignature\n"
                                                 "extendedKeyUsage=serverAuth\nsubjectKeyIdentifier=hash\nauthorityKeyIdentifier=keyid\n")
             run("req", "-new", *curve, "-nodes", "-keyout", f"{name}.key", "-out", f"{name}.csr", "-subj", f"/CN={name}")
-            run("x509", "-req", "-in", f"{name}.csr", "-CA", "ca.pem", "-CAkey", "ca.key", "-CAcreateserial", "-out", f"{name}.pem",
+            run("x509", "-req", "-sha256", "-in", f"{name}.csr", "-CA", "ca.pem", "-CAkey", "ca.key", "-CAcreateserial", "-out", f"{name}.pem",
                 "-days", "2", "-extfile", f"{name}.cnf")
     except (subprocess.SubprocessError, OSError) as exc:
         pytest.skip(f"could not make test certificates: {exc}")
