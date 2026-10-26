@@ -105,6 +105,10 @@ pre.log{margin:0;background:#0d1117;color:#d7dde6;border-radius:10px;padding:12p
 .source>header h3{flex:1}
 .tpl{border:1px solid var(--line);border-radius:10px;padding:12px;display:grid;gap:8px}
 .note{background:var(--soft);border-radius:8px;padding:8px 10px;font-size:14px;white-space:pre-wrap;word-break:break-word}
+.queue-review .banner{flex-wrap:wrap}
+.queue-review form{display:grid;gap:10px}
+.queue-review .person-name{flex:1;min-width:0}
+@media (max-width:720px){.queue-review .person-name{flex-basis:100%}}
 table{width:100%;border-collapse:collapse;font-size:14px}
 th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
 th{font-size:12.5px;color:var(--muted);font-weight:600}
@@ -175,6 +179,8 @@ let dirty = false;
 let job = null, jobNext = 0, pollTimer = null;
 const logBuf = [];
 let preview = null, history = null, health = null, renderInfo = null, suggestions = null, peopleList = null;
+let queuePage = null, queueQuery = '', queueLoading = false, queueError = '', queueRequest = 0;
+let queueChanging = false, lastSkipped = null;
 
 const $ = (sel, root = document) => root.querySelector(sel);
 
@@ -255,7 +261,7 @@ function confirmDialog({title, body, ok = 'OK', danger = false, fields = null}) 
 
 // ------------------------------------------------------------------------------------------------ form controls bound to S.config
 function markDirty() {
-  if (!dirty) { dirty = true; $('#savebar').classList.add('show'); }
+  if (!dirty) { dirty = true; $('#savebar').classList.add('show'); drawQueue(); }
 }
 // Redraw the current tab but keep keyboard focus on the same setting (the data-path attribute names it).
 function renderKeepingFocus() {
@@ -329,7 +335,7 @@ async function save() {
     const r = await api('/api/config', {config: S.config});
     S.config = r.config; S.problems = r.problems; S.note_limit = r.note_limit;
     dirty = false; $('#savebar').classList.remove('show');
-    preview = null; renderInfo = null;
+    preview = null; renderInfo = null; invalidateQueue();
     await refreshState();
     toast(r.warnings.length ? 'Saved, with notes: ' + r.warnings.join(' | ') : 'Saved.', r.warnings.length ? 'warn' : 'ok');
     render();
@@ -410,6 +416,7 @@ function poll() {
   }, 1200);
 }
 function jobFinished(j) {
+  preview = null; invalidateQueue();
   const r = j.result || {};
   const what = {login: 'Sign-in', fetch: 'Fetching people', dry_run: 'Dry run', run: 'Run'}[j.kind] || 'Job';
   if (j.state === 'stopped') toast(`${what} stopped.`, 'warn');
@@ -597,6 +604,7 @@ function renderPeople(root) {
   if (S.config.ai && S.config.ai.enabled) root.append(suggestCard());
 
   root.append(handCard());
+  root.append(queueCard());
   root.append(previewCard());
 }
 function suggestCard() {
@@ -645,17 +653,106 @@ function handCard() {
       try {
         const r = await api('/api/people/add', {text: add.value});
         add.value = '';
-        preview = null;                   // (now, not after the reload below: a preview asked for meanwhile is newer and stays)
+        preview = null; invalidateQueue(); // invalidate before the reload, so newer requests can still finish
         toast(`Added ${plural(r.added, 'person', 'people')}.` + (r.nameless ? ` ${plural(r.nameless, 'has', 'have')} no name, so a plain invitation.` : '') + (r.problems.length ? ' ' + r.problems[0] : ''), 'ok');
         await refreshState(); render();
       } catch (e) { toast(e.message, 'bad'); }
     }, 'primary')),
     h('details', {}, h('summary', {}, 'Never contact these people'),
       h('div', {class: 'grid2'}, skip, h('div', {class: 'row'}, button('Never contact', async () => {
-        try { const r = await api('/api/people/skip', {text: skip.value}); preview = null; toast(`Will never contact ${plural(r.skipped, 'person', 'people')}.`, 'ok'); skip.value = ''; await refreshState(); render(); }
+        try { const r = await api('/api/people/skip', {text: skip.value}); preview = null; invalidateQueue(); toast(`Will never contact ${plural(r.skipped, 'person', 'people')}.`, 'ok'); skip.value = ''; await refreshState(); render(); }
         catch (e) { toast(e.message, 'bad'); }
       })))));
 }
+// ------------------------------------------------------------------------------------------------ queue review
+function invalidateQueue() {
+  queueRequest++; queuePage = null; queueLoading = false; queueError = '';
+}
+function drawQueue(focusId) {
+  const old = $('#queue-review');
+  if (!old) return;
+  old.replaceWith(queueCard());
+  if (focusId) { const target = $('#' + focusId); if (target) target.focus({preventScroll: true}); }
+}
+async function loadQueue(offset = 0, focusId = 'queue-summary') {
+  const request = ++queueRequest;
+  const query = queueQuery;
+  if (queuePage && queuePage.query !== query) offset = 0;
+  queueLoading = true; queueError = ''; drawQueue();
+  try {
+    const result = await api('/api/queue?q=' + encodeURIComponent(query) + '&offset=' + offset + '&limit=20');
+    if (request !== queueRequest) return;
+    queuePage = {...result, query};
+  } catch (e) {
+    if (request !== queueRequest) return;
+    queuePage = null; queueError = e.message;
+  }
+  if (request !== queueRequest) return;
+  queueLoading = false; drawQueue(focusId);
+}
+async function changeQueuePerson(person, undo = false) {
+  if (queueChanging || dirty || jobBusy() || S.busy_elsewhere) return;
+  const offset = queuePage ? queuePage.offset : 0;
+  queueChanging = true; drawQueue();
+  try {
+    const result = await api('/api/people/skip', {text: person.url, undo});
+    if (undo) lastSkipped = null;
+    else if (result.skipped) lastSkipped = person;
+    else toast('This person was already handled. The queue has been refreshed.', 'info');
+    preview = null;
+    await refreshState(); renderHeader();
+    await loadQueue(offset, undo ? 'queue-summary' : 'queue-undo');
+  } catch (e) { toast(e.message, 'bad'); }
+  finally { queueChanging = false; drawQueue(lastSkipped ? 'queue-undo' : 'queue-summary'); }
+}
+function queueCard() {
+  const busy = queueLoading || queueChanging;
+  const search = h('input', {type: 'text', id: 'queue-search', value: queueQuery, maxlength: 200,
+    placeholder: 'Name, company, title, location or profile link', disabled: busy,
+    oninput: (ev) => { queueQuery = ev.target.value; }});
+  const body = [h('form', {onsubmit: (ev) => {
+    ev.preventDefault(); if (!busy && !dirty) loadQueue(0, 'queue-search');
+  }}, field('Search waiting people', search), h('div', {class: 'row'},
+    h('button', {type: 'submit', class: 'btn primary', disabled: busy || dirty}, 'Search queue'),
+    button('Refresh queue', () => loadQueue(queuePage ? queuePage.offset : 0), '', {disabled: busy || dirty})))];
+  if (dirty) body.push(banner('info', 'Save your changes before reviewing the queue.'));
+  if (lastSkipped) body.push(banner('ok', (lastSkipped.name || 'This person') + ' will not be contacted.',
+    button('Undo skip', () => changeQueuePerson(lastSkipped, true), 'small',
+      {id: 'queue-undo', disabled: busy || dirty || jobBusy() || S.busy_elsewhere})));
+  if (queueError) body.push(banner('bad', queueError + ' Use Refresh queue to try again.'));
+  const p = queuePage;
+  const summary = queueLoading ? 'Loading queue...' : p ? (p.total ?
+    `Showing ${p.offset + 1}-${p.offset + p.people.length} of ${p.total} matches · ${p.queued} waiting in total` :
+    (p.queued ? 'No matches. Try a different name, company or location.' : 'Nobody is waiting. Fetch people or add someone above.')) :
+    'Search or refresh to review everyone waiting, one page at a time.';
+  body.push(h('p', {class: 'muted', id: 'queue-summary', role: 'status', tabindex: '-1'}, summary));
+  if (p && !queueLoading) {
+    if (p.ai_enabled) body.push(banner('info', 'These are template notes. The AI helper may change a note during a run. Reviewing makes no AI calls.'));
+    if (jobBusy() || S.busy_elsewhere) body.push(banner('info', 'A job is running. Wait for it to finish before changing the queue.'));
+    for (const person of p.people) {
+      const name = person.name || '(no name)';
+      body.push(h('article', {class: 'tpl', 'aria-label': 'Review ' + name},
+        h('div', {class: 'row'}, h('h3', {class: 'person-name'}, name), chip(SOURCE_LABEL[person.source] || person.source),
+          button('Never contact', () => changeQueuePerson(person), 'small',
+            {disabled: busy || dirty || jobBusy() || S.busy_elsewhere, 'aria-label': 'Never contact ' + name})),
+        h('p', {class: 'muted'}, [person.title, person.company, person.location].filter(Boolean).join(' · ')),
+        h('a', {href: person.url, target: '_blank', rel: 'noopener noreferrer'}, 'Open LinkedIn profile'),
+        person.note ? h('div', {}, h('p', {class: 'muted'}, `Template note · ${person.chars}/${p.note_limit} characters`),
+          h('div', {class: 'note'}, person.note)) :
+          h('p', {class: 'muted'}, person.note_reason === 'notes_off' ? 'Plain invitation: notes are switched off.' :
+            'Plain invitation: no template fits this person. Add their name or use a template that needs fewer details.')));
+    }
+    body.push(h('div', {class: 'row'},
+      button('Previous page', () => loadQueue(Math.max(0, p.offset - p.limit)), '', {disabled: busy || dirty || p.offset === 0}),
+      button('Next page', () => loadQueue(p.offset + p.limit), '', {disabled: busy || dirty || !p.has_more})));
+  }
+  const result = card('Review your queue', 'Check each template note before a run, or remove someone with Never contact. Runs may shuffle people with equal priority. Refresh after a run to see changes.', ...body);
+  result.id = 'queue-review'; result.classList.add('queue-review');
+  result.setAttribute('aria-label', 'Review your queue');
+  result.setAttribute('aria-busy', String(busy));
+  return result;
+}
+
 async function loadPreview(ai) {
   preview = {loading: true}; render();
   try { preview = await api('/api/preview?sample=12' + (ai ? '&ai=1' : '')); }

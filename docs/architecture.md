@@ -34,7 +34,7 @@ code, and everything stays on their computer. Read this page, then [CONTRIBUTING
 | `models.py`, `store.py` | The person shape and URL canonicalisation; SQLite: people, invites, runs, kv, AI cache. |
 | `sources/` | `base.Source` contract; `yc`, `csv_file`, `webpage`, `linkedin_search`; `REGISTRY` in `__init__.py`. |
 | `targets.py`, `manual.py` | Filters over people; people added by hand and the never-contact list. |
-| `notes.py`, `planner.py` | The template engine (pure functions); who is next, `NoteComposer`, `build_preview`. |
+| `notes.py`, `planner.py` | The template engine (pure functions); who is next, `NoteComposer`, `build_preview`, and searchable `review_queue` pages for CLI/UI. |
 | `ai/` | `client.py` (OpenAI-compatible HTTP), `presets.py`, `prompts.py`, `guard.py` (validation of untrusted output), `assist.py`. |
 | `browser.py`, `sel.py`, `connect.py` | Launching the browser, login checks and human-paced helpers; how things are recognised on LinkedIn pages; the per-profile flow. |
 | `runner.py`, `lock.py`, `notify.py` | The send run and every stop condition; single-instance lock; desktop notifications. |
@@ -78,9 +78,9 @@ with the stand-in page in `tests/mock_linkedin.py` / `tests/mock_search.py`.
 ## Testing
 
 ```bash
-python -m pytest -m "not browser"      # ~950 tests, about 20 seconds, no browser
+python -m pytest -m "not browser"      # offline suite, no browser
 python -m playwright install chromium
-python -m pytest -m browser            # ~70 tests against a local stand-in for LinkedIn and the setup page, a couple of minutes
+python -m pytest -m browser            # Chromium against local stand-ins for LinkedIn and the setup page
 ```
 
 - Everything talks to **stand-ins on this machine**: `tests/mock_linkedin.py` (profile pages and dialogs),

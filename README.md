@@ -18,6 +18,7 @@ and sends a few connection requests a day from your own browser.</p>
   <a href="#testing-and-quality">Testing</a> &middot;
   <a href="docs/safety.md">Safety</a> &middot;
   <a href="docs/sources.md">Choosing who to meet</a> &middot;
+  <a href="docs/roadmap.md">Roadmap</a> &middot;
   <a href="CONTRIBUTING.md">Contributing</a>
 </p>
 
@@ -86,6 +87,7 @@ Then, from the terminal:
 ```bash
 connecto fetch                       # collect people from your sources
 connecto preview                     # who is waiting, and what each note would say - sends nothing
+connecto queue                       # review every waiting person and their template note, 20 per page
 connecto run --dry-run --limit 2     # watch it visit two profiles - sends nothing
 connecto run --limit 3               # send your first three (it asks you to confirm)
 connecto schedule install            # optional: do this every day by itself
@@ -113,6 +115,29 @@ Not sure how to put it into filters? `connecto ai suggest "founders of fintech s
 suggested filters (needs an AI provider set up, see below; it only suggests - nothing changes unless you add `--apply`).
 
 ## The note
+
+### Review before a run
+
+In `connecto ui`, open **People → Review your queue**. Search by name, company, title, location or profile link,
+page through everyone waiting, and read each person's template note with its character count. **Never contact** removes
+someone from the queue; **Undo skip** restores the last person you removed from this review screen. Reviewing sends
+nothing, opens no LinkedIn browser and makes no AI calls. Save any settings changes first.
+
+The same review is available in the terminal:
+
+```bash
+connecto queue --search "Acme"        # search everyone eligible, not just a sample
+connecto queue --limit 20 --offset 20 # next page (keep --search too, if used)
+connecto queue --json                # a page of people and template notes as JSON
+```
+
+The review uses the sender's source, target and status rules. People already sent, skipped or otherwise handled stay
+out; retryable outcomes such as dry runs remain eligible. Pages are stable while settings and stored people stay the
+same, but runs may shuffle equal-priority people. Notes use saved templates; the optional AI helper and LinkedIn's
+note availability can change what is sent. If notes are off or no template fits, the review explains why a plain
+invitation would be used. Refresh after a run or another terminal changes the queue.
+
+### Write your note
 
 LinkedIn lets a connection request carry a short note: **200 characters on a free account, 300 on Premium / Sales
 Navigator** (and free accounts can only add a few personal notes a month - at the time of writing). Set `message.plan` and Connecto keeps every
@@ -205,6 +230,7 @@ Mac wakes up, as long as it is still inside your active hours). See [docs/automa
 | `connecto fetch` | Collect people from your sources. |
 | `connecto add`, `skip` | Add people by hand / never contact somebody. |
 | `connecto preview` | Who is waiting and what each note would say. Sends nothing. |
+| `connecto queue` | Search all waiting people and review each template note. `--search`, `--limit`, `--offset`, `--json`. No browser or AI calls. |
 | `connecto run` | Send invitations within your limits. `--dry-run` sends nothing; `--limit N`; `--yes` skips the question. |
 | `connecto report` (`status`) | What was sent, what is coming, any pause. `export` writes the history as CSV. |
 | `connecto pause` / `resume` | Stop sending for a while / lift the pause. |

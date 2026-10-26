@@ -86,6 +86,118 @@ def tab(page, name: str):
     page.get_by_role("tab", name=name, exact=True).click()
 
 
+def test_review_queue_search_pagination_skip_and_undo(open_ui):
+    def prepare(home):
+        with Store(home.db_path) as store:
+            store.upsert_people([person(f"review-{i}", f"Queue Person {i:02d}", company="Acme") for i in range(21)],
+                                "manual", "manual")
+
+    ui = open_ui(READY, prepare=prepare)
+    page = ui.page
+    tab(page, "People")
+    review = page.get_by_role("region", name="Review your queue")
+    review.get_by_role("button", name="Refresh queue").click()
+    expect(review.locator("article")).to_have_count(20)
+    assert review.locator(".note").first.inner_text().startswith("Hi ")
+    review.get_by_role("button", name="Next page").click()
+    expect(review.locator("article")).to_have_count(1)
+    name = review.locator("article h3").inner_text()
+    review.get_by_role("button", name="Never contact " + name, exact=True).click()
+    expect(review.locator("article")).to_have_count(20)
+    expect(review.get_by_role("button", name="Undo skip")).to_be_focused()
+    review.get_by_role("button", name="Undo skip").click()
+    expect(review.locator("#queue-summary")).to_contain_text("21 matches")
+    search = review.get_by_label("Search waiting people")
+    search.fill(name)
+    search.press("Enter")
+    expect(review.locator("article")).to_have_count(1)
+    expect(search).to_be_focused()
+    expect(review.locator("article h3")).to_have_text(name)
+    assert ui.client.get("/api/history").json["runs"] == []
+
+
+@pytest.mark.parametrize("scheme", ["light", "dark"])
+def test_review_queue_mobile_hostile_text_and_empty_states(open_ui, scheme):
+    hostile = '<img src=x onerror="window.queueXss=1">'
+
+    def prepare(home):
+        with Store(home.db_path) as store:
+            store.upsert_people([person("hostile", hostile, company="X" * 250)], "manual", "manual")
+
+    ui = open_ui(READY, prepare=prepare, width=360, scheme=scheme)
+    page = ui.page
+    tab(page, "People")
+    review = page.get_by_role("region", name="Review your queue")
+    review.get_by_role("button", name="Search queue").click()
+    expect(review.locator("article")).to_have_count(1)
+    assert review.locator("article h3").inner_text() == hostile
+    assert review.locator("img").count() == 0 and page.evaluate("window.queueXss") is None
+    assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+    search = review.get_by_label("Search waiting people")
+    search.fill("not found")
+    search.press("Enter")
+    expect(review.locator("#queue-summary")).to_contain_text("No matches")
+    search.fill("")
+    search.press("Enter")
+    expect(review.locator("article")).to_have_count(1)
+    review.get_by_role("button", name="Never contact " + hostile, exact=True).click()
+    expect(review.locator("#queue-summary")).to_contain_text("Nobody is waiting")
+    assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
+
+
+def test_queue_discards_a_response_from_before_a_settings_save(open_ui):
+    ui = open_ui(READY, prepare=lambda home: add_people(home, [person("stale", "Queue Person")]))
+    page = ui.page
+    tab(page, "People")
+    held = []
+    old = ui.client.get("/api/queue").json
+    page.route("**/api/queue?*", lambda route: held.append(route))
+    review = page.get_by_role("region", name="Review your queue")
+    review.get_by_role("button", name="Refresh queue").click()
+    expect(review).to_contain_text("Loading queue")
+    page.get_by_label("Must mention any of these words", exact=True).fill("fintech")
+    page.get_by_role("button", name="Save changes").click()
+    expect(page.locator("#toasts")).to_contain_text("Saved.")
+    expect(review).to_contain_text("Search or refresh")
+    assert len(held) == 1
+    held[0].fulfill(json=old)
+    page.unroute("**/api/queue?*")
+    expect(review.locator("article")).to_have_count(0)
+    review.get_by_role("button", name="Refresh queue").click()
+    expect(review.locator("article")).to_have_count(1)
+
+
+def test_queue_load_failure_can_be_retried(open_ui):
+    ui = open_ui(READY)
+    page = ui.page
+    ui.allow("503")
+    tab(page, "People")
+    page.route("**/api/queue?*", lambda route: route.fulfill(status=503, json={"error": "Temporary failure"}))
+    review = page.get_by_role("region", name="Review your queue")
+    review.get_by_role("button", name="Refresh queue").click()
+    expect(review).to_contain_text("Temporary failure")
+    expect(review.get_by_role("button", name="Refresh queue")).to_be_enabled()
+    page.unroute("**/api/queue?*")
+    review.get_by_role("button", name="Refresh queue").click()
+    expect(review.locator("#queue-summary")).to_contain_text("Nobody is waiting")
+    expect(review).not_to_contain_text("Temporary failure")
+
+
+def test_queue_changes_require_saved_settings_and_preserve_other_form_drafts(open_ui):
+    ui = open_ui(READY)
+    page = ui.page
+    tab(page, "People")
+    draft = page.get_by_label("People to add")
+    draft.fill("My unfinished draft")
+    review = page.get_by_role("region", name="Review your queue")
+    review.get_by_role("button", name="Refresh queue").click()
+    expect(review.locator("#queue-summary")).to_contain_text("Nobody is waiting")
+    expect(draft).to_have_value("My unfinished draft")
+    page.get_by_label("Must mention any of these words", exact=True).fill("fintech")
+    expect(review.get_by_role("button", name="Search queue")).to_be_disabled()
+    expect(review).to_contain_text("Save your changes")
+
+
 # ============================================================================= first run
 def test_the_first_screen_gates_everything_on_the_safety_note(open_ui):
     ui = open_ui()

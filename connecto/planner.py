@@ -146,6 +146,38 @@ class NoteComposer:
                         hook=hook if used_hook else "")
 
 
+# ----------------------------------------------------------------------------- queue review
+def review_queue(cfg: dict, store: Store, *, query: str = "", offset: int = 0, limit: int = 20) -> dict:
+    """A searchable page of eligible people, with offline notes. Never starts AI or a browser.
+
+    A fixed seed keeps pages stable while the stored people and settings are unchanged. A run still shuffles ties;
+    reviewing a page neither reserves its people nor changes the sender's order or eligibility rules.
+    """
+    limit = max(1, min(limit, 100))
+    offset = max(0, offset)
+    queue = candidates(cfg, store, rng=random.Random(0))
+    text = query.strip().casefold()
+    fields = ("full_name", "company", "title", "headline", "location", "linkedin_url")
+    matches = [p for p in queue if not text or text in " ".join(str(p.get(k, "")) for k in fields).casefold()]
+    # A skip or another run may remove the last item on the current page. Show the last remaining page instead.
+    if offset >= len(matches):
+        offset = max(0, ((len(matches) - 1) // limit) * limit)
+    composer = NoteComposer(cfg)
+    people = []
+    for person in matches[offset:offset + limit]:
+        note = composer.compose(person, use_ai=False)
+        people.append({
+            "name": person.get("full_name", ""), "title": person.get("title") or person.get("headline", ""),
+            "company": person.get("company", ""), "location": person.get("location", ""),
+            "source": person.get("source_type", ""), "url": person.get("linkedin_url", ""),
+            "note": note.text if note else "", "chars": len(note.text) if note else 0,
+            "note_reason": "" if note else ("notes_off" if not composer.enabled else "no_template"),
+        })
+    return {"people": people, "total": len(matches), "queued": len(queue), "offset": offset, "limit": limit,
+            "has_more": offset + limit < len(matches), "note_limit": composer.limit,
+            "ai_enabled": bool((cfg.get("ai") or {}).get("enabled"))}
+
+
 # ----------------------------------------------------------------------------- the preview
 def _estimate_days(queued: int, daily_target: int, active_days: int) -> int:
     if queued <= 0:

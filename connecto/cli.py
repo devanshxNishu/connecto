@@ -144,6 +144,33 @@ def cmd_run(args) -> int:
 
 
 # ----------------------------------------------------------------------------- preview / report
+def cmd_queue(args) -> int:
+    home, cfg, _ = _context(args, need_config=True)
+    with Store(home.db_path) as store:
+        page = planner.review_queue(cfg, store, query=args.search, offset=args.offset, limit=args.limit)
+    if args.json:
+        print(json.dumps(page, indent=2, ensure_ascii=False))
+        return EXIT_OK
+    print(f"Queue: {page['total']} match this search, {page['queued']} waiting in total.")
+    print("Template notes only; reviewing sends nothing and makes no AI calls.")
+    if page["ai_enabled"]:
+        print("The AI helper may change the note during a run.")
+    for number, p in enumerate(page["people"], start=page["offset"] + 1):
+        print(f"\n{number}. {p['name'] or '(no name)'}")
+        print("   " + " - ".join(x for x in (p["title"], p["company"], p["location"]) if x))
+        print(f"   {p['url']}")
+        if p["note"]:
+            print(f"   Note ({p['chars']}/{page['note_limit']} chars): {p['note']}")
+        else:
+            reason = "notes are off" if p["note_reason"] == "notes_off" else "no template fits this person"
+            print(f"   Plain invitation: {reason}.")
+    if not page["people"]:
+        print("No people match this search." if page["queued"] else "Nobody is waiting. Fetch people or add someone by hand.")
+    if page["has_more"]:
+        print(f"\nMore people: repeat with --offset {page['offset'] + page['limit']} (keep the same search and limit).")
+    return EXIT_OK
+
+
 def cmd_preview(args) -> int:
     home, cfg, warnings = _context(args, need_config=True)
     load_env_into_process(home.env_path)
@@ -566,6 +593,12 @@ def build_parser() -> argparse.ArgumentParser:
     sp.add_argument("--ai", action="store_true", help="also use the AI helper for the examples (spends a few calls)")
     sp.add_argument("--retry-errors", action="store_true")
     sp.add_argument("--json", action="store_true")
+
+    sp = add("queue", cmd_queue, "search waiting people and review each template note (sends nothing)")
+    sp.add_argument("--search", default="", help="find a name, company, title, location or profile link")
+    sp.add_argument("--limit", type=int, default=20, help="people per page (1-100, default 20)")
+    sp.add_argument("--offset", type=int, default=0, help="number of matching people to skip")
+    sp.add_argument("--json", action="store_true", help="print the page as JSON")
 
     sp = add("run", cmd_run, "send invitations (within your limits)")
     sp.add_argument("--dry-run", action="store_true", help="visit profiles and show what would happen; send nothing")
