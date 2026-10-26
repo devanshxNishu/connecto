@@ -55,6 +55,29 @@ def tool(home, capsys):
     return call
 
 
+def test_queue_command_search_json_notes_and_pagination(ready, tool):
+    with Store(ready.db_path) as store:
+        store.upsert_people([person(f"q{i}", f"Queue Person {i}", company="Acme") for i in range(3)], "manual", "manual")
+    code, out, _ = tool("queue", "--search", "acme", "--limit", "2", "--json")
+    page = json.loads(out)
+    assert code == EXIT_OK and page["total"] == 3 and len(page["people"]) == 2
+    assert page["people"][0]["note"]
+    code, out, _ = tool("queue", "--limit", "2")
+    assert code == EXIT_OK and "--offset 2" in out and "Note (" in out
+    code, out, _ = tool("queue", "--search", "nobody")
+    assert code == EXIT_OK and "No people match this search" in out
+    code, out, _ = tool("queue", "--offset", "2", "--limit", "2", "--json")
+    assert code == EXIT_OK and len(json.loads(out)["people"]) == 1
+
+
+def test_queue_command_explains_plain_notes(ready, tool):
+    cfgmod.save(ready, make_cfg(message={"send_note": False}))
+    with Store(ready.db_path) as store:
+        store.upsert_people([person("plain", "Plain Person")], "manual", "manual")
+    code, out, _ = tool("queue")
+    assert code == EXIT_OK and "Plain invitation: notes are off" in out
+
+
 # ============================================================================= meta
 def test_without_a_command_it_says_where_to_start(home, tool):
     code, out, _ = tool()

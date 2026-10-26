@@ -49,6 +49,31 @@ def fresh(home, clean_env):
     stop_server(client)
 
 
+def test_queue_api_search_pagination_and_skip_undo(ui):
+    save_ready(ui)
+    with Store(ui.home.db_path) as store:
+        store.upsert_people([person(f"q{i}", f"Queue Person {i}", company="Acme") for i in range(25)], "manual", "manual")
+    page = ui.get("/api/queue?q=ACME&limit=10&offset=20")
+    assert page.status == 200 and len(page.json["people"]) == 5
+    assert page.json["queued"] == page.json["total"] == 25
+    row = page.json["people"][0]
+    assert row["note"] and row["chars"] <= page.json["note_limit"]
+    assert ui.post("/api/people/skip", {"text": row["url"]}).json["skipped"] == 1
+    assert ui.get("/api/queue").json["queued"] == 24
+    assert ui.post("/api/people/skip", {"text": row["url"], "undo": True}).json["undone"] == 1
+    assert ui.get("/api/queue").json["queued"] == 25
+
+
+@pytest.mark.parametrize("suffix", ["limit=oops", "offset=NaN"])
+def test_queue_api_rejects_invalid_pagination(ui, suffix):
+    assert ui.get("/api/queue?" + suffix).status == 400
+
+
+@pytest.mark.parametrize("credentials", [{"cookie": None}, {"header": None}, {"header": "wrong"}])
+def test_queue_requires_both_session_and_api_secret(ui, credentials):
+    assert ui.get("/api/queue", **credentials).status in (401, 403)
+
+
 def save_ready(ui: Client, **over) -> dict:
     """Save a config that is ready to send (name set, risks accepted)."""
     cfg = make_cfg(**over)

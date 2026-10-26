@@ -429,6 +429,13 @@ class App:
         pv["ai_used"] = assistant is not None
         return pv
 
+    def queue(self, query: dict) -> dict:
+        cfg, _ = self.load_cfg()
+        with self.store() as store:
+            return planner.review_queue(cfg, store, query=query.get("q", [""])[0],
+                                        offset=int(query.get("offset", ["0"])[0]),
+                                        limit=int(query.get("limit", ["20"])[0]))
+
     def people(self, query: dict) -> dict:
         limit = max(1, min(int(query.get("limit", ["50"])[0]), 200))
         offset = max(0, int(query.get("offset", ["0"])[0]))
@@ -774,6 +781,7 @@ def _r_ai_key(app, body, q): return app.ai_key(body)
 def _r_ai_test(app, body, q): return app.ai_test(body)
 def _r_ai_suggest(app, body, q): return app.ai_suggest(body)
 def _r_preview(app, body, q): return app.preview(q)
+def _r_queue(app, body, q): return app.queue(q)
 def _r_people(app, body, q): return app.people(q)
 def _r_add(app, body, q): return app.add_people(body)
 def _r_skip(app, body, q): return app.skip_people(body)
@@ -806,6 +814,7 @@ ROUTES = {
     ("GET", "/api/state"): _r_state, ("POST", "/api/config"): _r_save_config,
     ("POST", "/api/render"): _r_render, ("POST", "/api/ai/key"): _r_ai_key, ("POST", "/api/ai/test"): _r_ai_test, ("POST", "/api/ai/suggest"): _r_ai_suggest,
     ("GET", "/api/preview"): _r_preview, ("GET", "/api/people"): _r_people,
+    ("GET", "/api/queue"): _r_queue,
     ("POST", "/api/people/add"): _r_add, ("POST", "/api/people/skip"): _r_skip,
     ("POST", "/api/pause"): _r_pause, ("POST", "/api/resume"): _r_resume, ("POST", "/api/schedule"): _r_schedule,
     ("GET", "/api/doctor"): _r_doctor, ("GET", "/api/history"): _r_history, ("GET", "/api/export.csv"): _r_export,
